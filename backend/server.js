@@ -9,7 +9,6 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import multer from 'multer'
 import { createClient } from '@supabase/supabase-js'
-import nodemailer from 'nodemailer'
 import crypto from 'crypto'
 import rateLimit from 'express-rate-limit'
 
@@ -586,13 +585,7 @@ app.post('/api/sessions/:id/check-edit-conflicts', verifyToken, async (req, res)
     res.status(500).json({ error: err.message })
   }
 })
-
-// ============================================================
-//  SECTION 5 — AUTH ROUTES
-// ============================================================
-
-
-
+//--------
 // ── STEP 1: Send OTP before creating account
 app.post('/api/auth/signup', async (req, res) => {
   try {
@@ -601,64 +594,22 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' })
     }
 
+    const key = email.toLowerCase().trim()
+
     // Check if email already exists
     const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 })
-    const alreadyExists = users?.some(u => u.email === email.toLowerCase().trim())
+    const alreadyExists = users?.some(u => u.email === key)
     if (alreadyExists) {
       return res.status(409).json({ error: 'An account with this email already exists.' })
     }
 
-    // Generate OTP
-    const otp = crypto.randomInt(100000, 999999).toString()
-    const expiresAt = Date.now() + 10 * 60 * 1000  // 10 minutes
-
-    // Store OTP + password in Supabase otps table
-    await supabase.from('otps').upsert({
-      email:      email.toLowerCase().trim(),
-      otp,
-      type:       'signup',
-      password,
-      expires_at: new Date(expiresAt).toISOString()
-    }, { onConflict: 'email,type' })
-
-    // Send OTP email
-    await mailer.sendMail({
-      from: `"VoterScan" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: 'Verify your VoterScan Account',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 12px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h2 style="color: #1a56db; margin: 0;">VoterScan</h2>
-            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Admin Portal</p>
-          </div>
-          <div style="background: #ffffff; border-radius: 8px; padding: 28px; border: 1px solid #e2e8f0;">
-            <h3 style="color: #0f172a; margin-top: 0;">Verify Your Email</h3>
-            <p style="color: #475569; font-size: 15px;">Use the code below to verify your email and complete registration. It expires in <strong>10 minutes</strong>.</p>
-            <div style="text-align: center; margin: 28px 0;">
-              <span style="
-                display: inline-block;
-                font-size: 38px;
-                font-weight: 800;
-                letter-spacing: 12px;
-                color: #1a56db;
-                background: #eff6ff;
-                border: 2px dashed #93c5fd;
-                border-radius: 10px;
-                padding: 14px 24px;
-                font-family: 'Courier New', monospace;
-              ">${otp}</span>
-            </div>
-            <p style="color: #94a3b8; font-size: 13px; text-align: center;">
-              If you didn't request this, you can safely ignore this email.
-            </p>
-          </div>
-          <p style="color: #cbd5e1; font-size: 12px; text-align: center; margin-top: 20px;">
-            © VoterScan · Do not reply to this email
-          </p>
-        </div>
-      `
+    // Supabase sends the OTP email itself (uses the "Confirm signup" template)
+    const { error } = await supabase.auth.signUp({
+      email: key,
+      password
     })
+
+    if (error) return res.status(400).json({ error: error.message })
 
     res.json({ message: 'OTP sent to your email. Please verify to complete signup.' })
   } catch (err) {
@@ -666,7 +617,6 @@ app.post('/api/auth/signup', async (req, res) => {
     res.status(500).json({ error: 'Failed to send OTP. Please try again.' })
   }
 })
-
 // ── STEP 2: Verify OTP and create account
 app.post('/api/auth/verify-signup-otp', async (req, res) => {
   try {
@@ -677,42 +627,50 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
 
     const key = email.toLowerCase().trim()
 
-    const { data: otpRow } = await supabase
-      .from('otps')
-      .select('*')
-      .eq('email', key)
-      .eq('type', 'signup')
-      .single()
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: key,
+      token: otp.trim(),
+      type: 'signup'
+    })
 
-    if (!otpRow) {
-      return res.status(400).json({ error: 'No OTP found. Please request a new one.' })
-    }
-    if (new Date() > new Date(otpRow.expires_at)) {
-      await supabase.from('otps').delete().eq('email', key).eq('type', 'signup')
-      return res.status(400).json({ error: 'OTP has expired. Please sign up again.' })
-    }
-    if (otpRow.otp !== otp.trim()) {
-      return res.status(400).json({ error: 'Incorrect OTP. Please try again.' })
+    if (error) {
+      return res.status(400).json({ error: 'Incorrect or expired OTP. Please try again.' })
     }
 
-    // OTP valid — create the account now
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password: otpRow.password,
-      email_confirm: true
+    const userId = data.user?.id
+    if (userId) {
+      // avoid duplicate insert if this somehow runs twice
+      const { data: existingAdmin } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      if (!existingAdmin) {
+        await supabase.from('admins').insert({ id: userId, email: key, phone: null })
+      }
+    }
+
+    res.json({ message: 'Account verified and created successfully! You can now sign in.' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── RESEND SIGNUP OTP
+app.post('/api/auth/signup-resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body
+    if (!email) return res.status(400).json({ error: 'Email is required' })
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.toLowerCase().trim()
     })
 
     if (error) return res.status(400).json({ error: error.message })
 
-    const userId = data.user?.id
-    if (userId) {
-      await supabase.from('admins').insert({ id: userId, email, phone: null })
-    }
-
-    // Clean up
-    await supabase.from('otps').delete().eq('email', key).eq('type', 'signup')
-
-    res.json({ message: 'Account verified and created successfully! You can now sign in.' })
+    res.json({ message: 'OTP resent successfully.' })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -785,21 +743,10 @@ app.post('/api/auth/logout', verifyToken, async (req, res) => {
     res.json({ message: 'Logged out' })
   }
 })
-
 // ============================================================
-//  SECTION 5B — FORGOT PASSWORD (NODEMAILER OTP FLOW)
+//  SECTION 5B — FORGOT PASSWORD (OTP FLOW)
 // ============================================================
 
-
-
-// ── Nodemailer transporter (Gmail)
-const mailer = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD   // App Password, NOT your Gmail password
-  }
-})
 
 // ── SEND OTP
 app.post('/api/auth/forgot-password', async (req, res) => {
@@ -807,66 +754,21 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Email is required' })
 
+    const key = email.toLowerCase().trim()
+
     // Check if this email exists in Supabase auth
     const { data: users, error: listError } = await supabase.auth.admin.listUsers()
     if (listError) return res.status(500).json({ error: listError.message })
 
-    const userExists = users?.users?.some(u => u.email === email.toLowerCase().trim())
+    const userExists = users?.users?.some(u => u.email === key)
     if (!userExists) {
       // Don't reveal whether email exists — silent success
       return res.json({ message: 'If this email is registered, an OTP has been sent.' })
     }
 
-    // Generate 6-digit OTP
-    const otp = crypto.randomInt(100000, 999999).toString()
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
-
-    // Store OTP in Supabase otps table
-    await supabase.from('otps').upsert({
-      email:      email.toLowerCase().trim(),
-      otp,
-      type:       'forgot_password',
-      expires_at: expiresAt
-    }, { onConflict: 'email,type' })
-
-    // Send email
-    await mailer.sendMail({
-      from: `"VoterScan" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: 'Your VoterScan Password Reset Code',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 12px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h2 style="color: #1a56db; margin: 0;">VoterScan</h2>
-            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Admin Portal</p>
-          </div>
-          <div style="background: #ffffff; border-radius: 8px; padding: 28px; border: 1px solid #e2e8f0;">
-            <h3 style="color: #0f172a; margin-top: 0;">Password Reset Request</h3>
-            <p style="color: #475569; font-size: 15px;">Use the code below to reset your password. It expires in <strong>10 minutes</strong>.</p>
-            <div style="text-align: center; margin: 28px 0;">
-              <span style="
-                display: inline-block;
-                font-size: 38px;
-                font-weight: 800;
-                letter-spacing: 12px;
-                color: #1a56db;
-                background: #eff6ff;
-                border: 2px dashed #93c5fd;
-                border-radius: 10px;
-                padding: 14px 24px;
-                font-family: 'Courier New', monospace;
-              ">${otp}</span>
-            </div>
-            <p style="color: #94a3b8; font-size: 13px; text-align: center;">
-              If you didn't request this, you can safely ignore this email.
-            </p>
-          </div>
-          <p style="color: #cbd5e1; font-size: 12px; text-align: center; margin-top: 20px;">
-            © VoterScan · Do not reply to this email
-          </p>
-        </div>
-      `
-    })
+    // Supabase sends the OTP email itself (uses the "Reset Password" template)
+    const { error } = await supabase.auth.resetPasswordForEmail(key)
+    if (error) return res.status(500).json({ error: error.message })
 
     res.json({ message: 'If this email is registered, an OTP has been sent.' })
   } catch (err) {
@@ -874,7 +776,6 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     res.status(500).json({ error: 'Failed to send OTP. Please try again.' })
   }
 })
-
 // ── VERIFY OTP + SET NEW PASSWORD
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {
@@ -889,44 +790,24 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
     const key = email.toLowerCase().trim()
 
-    const { data: otpRow } = await supabase
-      .from('otps')
-      .select('*')
-      .eq('email', key)
-      .eq('type', 'forgot_password')
-      .single()
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: key,
+      token: otp.trim(),
+      type: 'recovery'
+    })
 
-    // OTP not found
-    if (!otpRow) {
-      return res.status(400).json({ error: 'No OTP found for this email. Please request a new one.' })
+    if (error) {
+      return res.status(400).json({ error: 'Incorrect or expired OTP. Please request a new one.' })
     }
 
-    // OTP expired
-    if (new Date() > new Date(otpRow.expires_at)) {
-      await supabase.from('otps').delete().eq('email', key).eq('type', 'forgot_password')
-      return res.status(400).json({ error: 'OTP has expired. Please request a new one.' })
-    }
+    const userId = data.user?.id
+    if (!userId) return res.status(404).json({ error: 'User not found.' })
 
-    // Wrong OTP
-    if (otpRow.otp !== otp.trim()) {
-      return res.status(400).json({ error: 'Incorrect OTP. Please check and try again.' })
-    }
-
-    // OTP is valid — find the user and update password
-    const { data: users, error: listError } = await supabase.auth.admin.listUsers()
-    if (listError) return res.status(500).json({ error: listError.message })
-
-    const user = users?.users?.find(u => u.email === key)
-    if (!user) return res.status(404).json({ error: 'User not found.' })
-
-    const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+    const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
       password: newPassword
     })
 
     if (updateError) return res.status(500).json({ error: updateError.message })
-
-    // Clean up — OTP used, delete it
-    await supabase.from('otps').delete().eq('email', key).eq('type', 'forgot_password')
 
     res.json({ message: 'Password reset successfully.' })
   } catch (err) {
@@ -934,6 +815,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
 // ============================================================
 //  SECTION 6 — ADMIN CODE ROUTES
 // ============================================================
