@@ -1,0 +1,1966 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a56db">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VoterScan">
+<link rel="apple-touch-icon" href="/logo.png">
+<title>BlinkCapture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Instrument+Serif:ital@0;1&family=Azeret+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 16px;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  background-image: url("bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #1a1714;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(36px, 6vw, 52px) clamp(14px, 4vw, 24px) clamp(40px, 7vw, 80px);
+  position: relative;
+  min-height: 100vh;
+}
+
+:root {
+  --white:  #fff;
+  --cream:  #f7f4f0;
+  --paper:  #f0ece6;
+  --bone:   #e5dfd7;
+  --mist:   #c8c0b6;
+  --stone:  #8a8278;
+  --slate:  #4a4540;
+  --ink:    #1a1714;
+  --blue:   #0066ff;
+  --teal:   #00c4a0;
+  --amber:  #f5a623;
+  --red:    #ff4d2e;
+  --r-blink: 16px;
+  --rl:     24px;
+  --sh:     0 2px 8px rgba(26,23,20,.06), 0 8px 32px rgba(26,23,20,.08);
+  --shl:    0 4px 16px rgba(26,23,20,.08), 0 20px 60px rgba(26,23,20,.12);
+}
+
+/* background override removed */
+
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  z-index: 100;
+  background: linear-gradient(90deg, var(--blue), var(--teal));
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 15%, rgba(0,102,255,.04), transparent 60%),
+    radial-gradient(ellipse 50% 60% at 90% 80%, rgba(0,196,160,.04), transparent 60%);
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: min(100%, 820px);
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(20px, 3.5vw, 30px);
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  opacity: 0;
+  animation: blink-up 0.8s 0.05s ease forwards;
+}
+
+@keyframes blink-up {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.brand-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(20px, 4vw, 28px);
+  font-style: italic;
+  letter-spacing: -0.5px;
+}
+
+.brand-title strong {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-sub {
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--stone);
+  letter-spacing: 2px;
+  margin-top: 5px;
+}
+
+.live-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  letter-spacing: 1.5px;
+  color: var(--stone);
+  background: var(--paper);
+  border: 1px solid var(--bone);
+  padding: 5px clamp(8px, 1.5vw, 12px);
+  border-radius: 100px;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mist);
+  transition: all 0.4s;
+}
+
+.live-dot.on {
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(255,77,46,.2);
+  animation: blink-d 1.6s ease-in-out infinite;
+}
+
+@keyframes blink-d { 0%,100%{opacity:1}50%{opacity:.4} }
+
+.session-id {
+  display: none;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--bone), transparent);
+  opacity: 0;
+  animation: blink-up 0.8s 0.1s ease forwards;
+}
+
+.eyebrow {
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--stone);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.eyebrow span { color: var(--blue); opacity: .7; }
+
+.name-sec {
+  width: 100%;
+  opacity: 0;
+  animation: blink-up 0.8s 0.15s ease forwards;
+}
+
+.name-panel {
+  background: var(--white);
+  border: 1px solid var(--bone);
+  border-radius: var(--rl);
+  padding: clamp(16px, 3vw, 22px);
+  box-shadow: var(--sh);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: clamp(10px, 2vw, 14px);
+  align-items: center;
+  transition: border-color .3s, box-shadow .3s;
+}
+
+.name-panel:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,102,255,.08), var(--sh);
+}
+
+.name-avatar {
+  width: clamp(38px, 8vw, 45px);
+  height: clamp(36px, 7vw, 42px);
+  border-radius: 12px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(0,102,255,.09), rgba(0,196,160,.09));
+  border: 1px solid var(--bone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(22px, 5vw, 29px);
+}
+
+.name-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name-field label {
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--stone);
+  letter-spacing: 2px;
+}
+
+#nameInput, #idInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+  width: 100%;
+  caret-color: var(--blue);
+}
+
+#nameInput::placeholder,
+#idInput::placeholder { color: var(--mist); font-weight: 300; }
+
+.confirmed-row {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.confirmed-row.show { display: flex; }
+
+.check-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,196,160,.12);
+  border: 1px solid rgba(0,196,160,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  animation: g-pop 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+
+.confirmed-name {
+  font-size: clamp(14px, 3vw, 18px);
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-confirm {
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: clamp(8px, 1.5vw, 10px) clamp(14px, 2.5vw, 20px);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--ink);
+  color: var(--white);
+  flex-shrink: 0;
+  transition: all .2s;
+  white-space: nowrap;
+  min-height: 44px;
+}
+
+.btn-confirm:hover { background: var(--blue); transform: translateY(-1px); }
+.btn-confirm:disabled { background: var(--bone); color: var(--stone); cursor: not-allowed; transform: none; }
+
+.btn-edit {
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--stone);
+  letter-spacing: 1px;
+  background: var(--paper);
+  border: 1px solid var(--bone);
+  padding: 6px clamp(8px, 1.5vw, 12px);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all .2s;
+  min-height: 36px;
+}
+
+.btn-edit:hover { border-color: var(--blue); color: var(--blue); }
+
+.status-strip {
+  width: 100%;
+  background: var(--white);
+  border: 1px solid var(--bone);
+  border-radius: 100px;
+  padding: clamp(8px, 1.5vw, 10px) clamp(14px, 2.5vw, 18px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--sh);
+  opacity: 0;
+  animation: blink-up 0.8s 0.25s ease forwards;
+  transition: border-color .4s, box-shadow .4s;
+  gap: 10px;
+}
+
+.status-strip.s-ready    { border-color: rgba(0,196,160,.4); box-shadow: 0 0 0 3px rgba(0,196,160,.06), var(--sh); }
+.status-strip.s-captured { border-color: rgba(0,102,255,.4); box-shadow: 0 0 0 3px rgba(0,102,255,.06), var(--sh); }
+
+.s-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.s-orb  { width: 8px; height: 8px; border-radius: 50%; background: var(--mist); flex-shrink: 0; transition: all .4s; }
+.s-orb.ready    { background: var(--teal); box-shadow: 0 0 0 3px rgba(0,196,160,.2); }
+.s-orb.captured { background: var(--blue); box-shadow: 0 0 0 3px rgba(0,102,255,.2); }
+.s-txt  { font-size: var(--text-sm); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.s-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.bpips { display: flex; gap: 4px; }
+.bp {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bone);
+  transition: all .15s;
+}
+
+.bp.lit {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 6px rgba(245,166,35,.5);
+  animation: bpop .15s ease;
+}
+
+@keyframes bpop { 0%{transform:scale(1.6)} 100%{transform:scale(1)} }
+
+.ear-tag { font-family: 'Azeret Mono', monospace; font-size: var(--text-xs); color: var(--mist); display: none; }
+.ear-tag.show { display: block; }
+
+.cam-sec {
+  width: 100%;
+  opacity: 0;
+  animation: blink-up 0.8s 0.35s ease forwards;
+}
+
+.cam-wrap {
+  position: relative;
+  max-width: min(100%, 640px);
+  margin: 0 auto;
+}
+
+.cam-card {
+  position: relative;
+  border-radius: var(--rl);
+  overflow: hidden;
+  background: var(--ink);
+  border: 1px solid var(--bone);
+  box-shadow: var(--shl);
+  transition: border-color .5s, box-shadow .5s;
+}
+
+.cam-card.face-on {
+  border-color: rgba(0,196,160,.35);
+  box-shadow: 0 0 0 2px rgba(0,196,160,.1), var(--shl);
+}
+
+.cam-card.capturing {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,102,255,.15), var(--shl);
+  animation: camflash .5s ease;
+}
+
+@keyframes camflash { 0%{filter:brightness(1)} 25%{filter:brightness(1.9)} 100%{filter:brightness(1)} }
+
+#videoEl {
+  width: 100%;
+  display: block;
+  transform: scaleX(-1);
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  background: #000;
+}
+
+.corner { position: absolute; width: 20px; height: 20px; z-index: 6; }
+.corner::before, .corner::after { content: ''; position: absolute; background: rgba(255,255,255,.6); }
+.c-tl{top:12px;left:12px} .c-tl::before{top:0;left:0;width:100%;height:1.5px} .c-tl::after{top:0;left:0;width:1.5px;height:100%}
+.c-tr{top:12px;right:12px} .c-tr::before{top:0;right:0;width:100%;height:1.5px} .c-tr::after{top:0;right:0;width:1.5px;height:100%}
+.c-bl{bottom:12px;left:12px} .c-bl::before{bottom:0;left:0;width:100%;height:1.5px} .c-bl::after{bottom:0;left:0;width:1.5px;height:100%}
+.c-br{bottom:12px;right:12px} .c-br::before{bottom:0;right:0;width:100%;height:1.5px} .c-br::after{bottom:0;right:0;width:1.5px;height:100%}
+
+#faceRect {
+  position: absolute;
+  border: 1px solid rgba(0,196,160,.7);
+  border-radius: 5px;
+  pointer-events: none;
+  z-index: 7;
+  opacity: 0;
+  transition: opacity .3s, left .08s, top .08s, width .08s, height .08s;
+}
+
+#faceRect::after {
+  content: 'FACE DETECTED';
+  position: absolute;
+  top: -20px; left: 0;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 8px;
+  color: rgba(0,196,160,.9);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+#faceRect.show { opacity: 1; }
+
+.scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  top: 0;
+  z-index: 7;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(0,196,160,.7) 50%, transparent);
+  transition: opacity .4s;
+}
+
+.scan.on { opacity: 1; animation: scanmove 2.2s linear infinite; }
+@keyframes scanmove { 0%{top:0} 100%{top:100%} }
+
+#flashEl {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.85);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+  border-radius: var(--rl);
+}
+
+.ear-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 8;
+  padding: 20px 14px 12px;
+  background: linear-gradient(transparent, rgba(26,23,20,.6));
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .4s;
+}
+
+.ear-bar.show { opacity: 1; }
+
+.ear-chip {
+  background: rgba(255,255,255,.07);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 100px;
+  padding: 4px clamp(8px, 1.5vw, 12px);
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: rgba(255,255,255,.55);
+  letter-spacing: .8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ev { color: #fff; font-weight: 500; transition: color .2s; }
+.ev.closed { color: var(--amber); }
+
+#permEl {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, rgba(26,23,20,.97), rgba(26,23,20,.99));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.5vw, 18px);
+  border-radius: var(--rl);
+  padding: clamp(12px, 4vw, 24px);
+  overflow-y: auto;
+}
+
+.perm-ring {
+  width: clamp(56px, 10vw, 70px);
+  height: clamp(56px, 10vw, 70px);
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(22px, 5vw, 30px);
+  background: rgba(255,255,255,.04);
+  animation: rpulse 2.4s ease-in-out infinite;
+}
+
+@keyframes rpulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,196,160,.25)} 50%{box-shadow:0 0 0 16px rgba(0,196,160,0)} }
+
+#permEl h2   { color: #fff; font-size: clamp(15px, 3vw, 18px); font-weight: 500; }
+#permEl p    { font-family: 'Azeret Mono', monospace; font-size: var(--text-xs); color: rgba(255,255,255,.4); text-align: center; max-width: 220px; line-height: 1.7; letter-spacing: .3px; }
+
+.btn-cam {
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: clamp(10px, 2vw, 12px) clamp(20px, 4vw, 28px);
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,102,255,.3);
+  transition: transform .15s, box-shadow .15s;
+  min-height: 44px;
+}
+
+.btn-cam:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,102,255,.4); }
+
+.cam-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--stone);
+  letter-spacing: .3px;
+  line-height: 1.8;
+}
+
+.cam-hint em { color: var(--blue); font-style: normal; }
+
+/* ── FACE LOADING OVERLAY ── */
+#faceLoadingOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,23,20,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#faceLoadingOverlay.show { display: flex; }
+
+.flo-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 36px;
+  text-align: center;
+  max-width: min(90vw, 340px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.flo-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #e5dfd7;
+  border-top-color: #0066ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.flo-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1714;
+  margin-bottom: 6px;
+}
+
+.flo-sub {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 11px;
+  color: #8a8278;
+  letter-spacing: 0.5px;
+}
+
+/* ── ALREADY VOTED POPUP ── */
+#alreadyVotedPopup {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,23,20,0.65);
+  backdrop-filter: blur(8px);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#alreadyVotedPopup.show { display: flex; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.avp-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: clamp(24px, 4vw, 36px) clamp(20px, 4vw, 32px);
+  text-align: center;
+  max-width: min(90vw, 380px);
+  width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  animation: slideUp 0.4s cubic-bezier(0.34,1.2,0.64,1);
+  border: 2px solid #ff4d2e20;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.avp-icon {
+  font-size: clamp(40px, 8vw, 56px);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.avp-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(20px, 4vw, 26px);
+  color: #1a1714;
+  margin-bottom: 8px;
+}
+
+.avp-sub {
+  font-family: 'Azeret Mono', monospace;
+  font-size: 11px;
+  color: #8a8278;
+  letter-spacing: 0.5px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.avp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff3f0;
+  border: 1px solid #ff4d2e40;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 11px;
+  color: #ff4d2e;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.avp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff4d2e;
+  animation: blink-d 1.2s infinite;
+}
+
+.avp-score {
+  background: #f7f4f0;
+  border: 1px solid #e5dfd7;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 11px;
+  color: #4a4540;
+}
+
+.avp-score-label { color: #8a8278; margin-bottom: 4px; }
+.avp-score-val   { font-size: 18px; font-weight: 700; color: #ff4d2e; font-family: 'DM Sans', sans-serif; }
+
+.avp-stored-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e5dfd7;
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.avp-btn {
+  width: 100%;
+  background: #1a1714;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.avp-btn:hover { background: #ff4d2e; }
+
+/* ── MODEL LOADING STATUS ── */
+#modelStatus {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: #1a1714;
+  color: #fff;
+  font-family: 'Azeret Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#modelStatus.show { opacity: 1; }
+.ms-dot { width: 6px; height: 6px; border-radius: 50%; background: #f5a623; animation: blink-d 1s infinite; }
+.ms-dot.ready { background: #00c4a0; animation: none; }
+
+.gallery-sec {
+  width: 100%;
+  opacity: 0;
+  animation: blink-up 0.8s 0.5s ease forwards;
+}
+
+.gallery-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gal-meta { display: flex; gap: 10px; align-items: center; }
+
+#photoCount {
+  font-family: 'Azeret Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--blue);
+  letter-spacing: 1px;
+}
+
+#gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  gap: clamp(12px, 2.5vw, 18px);
+}
+
+.empty-st {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: clamp(24px, 4vw, 40px) clamp(12px, 2vw, 20px);
+  border: 1px dashed var(--bone);
+  border-radius: var(--rl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-ico {
+  width: clamp(40px, 8vw, 52px);
+  height: clamp(40px, 8vw, 52px);
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--bone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(18px, 3.5vw, 22px);
+}
+
+.empty-txt { font-family: 'Azeret Mono', monospace; font-size: var(--text-xs); color: var(--stone); letter-spacing: .5px; line-height: 1.9; }
+.empty-sub { font-size: var(--text-sm); color: var(--mist); font-family: 'Instrument Serif', serif; font-style: italic; }
+
+.photo-card {
+  border-radius: var(--rl);
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--bone);
+  box-shadow: var(--sh);
+  animation: cardrise .45s cubic-bezier(.22,1,.36,1) both;
+  transition: transform .25s, box-shadow .25s;
+  cursor: pointer;
+  position: relative;
+}
+
+@keyframes cardrise { from{opacity:0;transform:translateY(16px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+.photo-card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(26,23,20,.1), 0 24px 48px rgba(26,23,20,.13); }
+.photo-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; transform: scaleX(-1); border-bottom: 1px solid var(--bone); }
+
+.photo-info { padding: clamp(10px, 2vw, 12px) 14px 14px; }
+.photo-name { font-family: 'Instrument Serif', serif; font-size: clamp(14px, 2.5vw, 17px); letter-spacing: -.2px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.photo-name span { background: linear-gradient(135deg, var(--blue), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.photo-ts { font-family: 'Azeret Mono', monospace; font-size: var(--text-xs); color: var(--mist); letter-spacing: .5px; }
+.photo-num { position: absolute; top: 10px; left: 10px; font-family: 'Azeret Mono', monospace; font-size: 9px; letter-spacing: 1px; background: rgba(26,23,20,.6); color: rgba(255,255,255,.85); padding: 3px 8px; border-radius: 100px; }
+
+#toast {
+  position: fixed;
+  bottom: clamp(16px, 4vw, 32px);
+  left: 50%;
+  transform: translateX(-50%) translateY(70px);
+  background: var(--ink);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 12px clamp(14px, 3vw, 22px);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 32px rgba(26,23,20,.25);
+  z-index: 999;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  opacity: 0;
+  max-width: calc(100vw - 32px);
+  transition: transform .5s cubic-bezier(.34,1.56,.64,1), opacity .5s ease;
+}
+
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.tdot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+
+::-webkit-scrollbar-thumb { background: var(--bone); }
+
+@media (max-width: 480px) {
+  .name-panel {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+  .name-panel .btn-confirm,
+  .name-panel .btn-edit {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .confirmed-row { grid-column: 2; }
+  .status-strip { flex-wrap: wrap; border-radius: 14px; }
+  .s-right { display: none; }
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 16px 10px 28px;
+  }
+
+  .glass-container {
+    padding: 16px 12px;
+    border-radius: 18px;
+  }
+
+  .page {
+    gap: 14px;
+  }
+
+  /* ── HEADER ── */
+  .brand-title { font-size: 16px; }
+  .brand-sub   { font-size: 10px; letter-spacing: 1px; }
+  .live-pill   { font-size: 10px; padding: 4px 8px; }
+
+  /* ── EYEBROWS / SECTION LABELS ── */
+  .eyebrow { font-size: 10px; margin-bottom: 10px; }
+
+  /* ── NAME PANEL ── */
+  .name-panel { padding: 12px; gap: 8px; }
+  .name-avatar { width: 36px; height: 36px; font-size: 18px; }
+  .name-field label { font-size: 10px; }
+  #nameInput, #idInput { font-size: 13px; }
+  .confirmed-name { font-size: 13px; }
+  .btn-confirm { font-size: 12px; padding: 8px 14px; min-height: 42px; }
+  .btn-edit { font-size: 10px; padding: 5px 10px; min-height: 34px; }
+
+  /* ── STATUS STRIP ── */
+  .status-strip { padding: 8px 12px; }
+  .s-txt { font-size: 12px; }
+
+  /* ── CAMERA PERMISSION OVERLAY ── */
+  .perm-ring { width: 44px; height: 44px; font-size: 18px; }
+  #permEl h2 { font-size: 13px; }
+  #permEl p { font-size: 10px; max-width: 170px; line-height: 1.5; }
+  .btn-cam { padding: 9px 16px; font-size: 12px; min-height: 42px; }
+
+  .cam-hint { margin-top: 8px; font-size: 10px; line-height: 1.6; }
+
+  /* ── EAR / BLINK DEBUG BAR ── */
+  .ear-chip { font-size: 9px; padding: 3px 8px; }
+
+  /* ── GALLERY ── */
+  #photoCount { font-size: 10px; }
+  .photo-name { font-size: 13px; }
+  .photo-ts { font-size: 9px; }
+  .empty-txt { font-size: 10px; }
+  .empty-sub { font-size: 12px; }
+
+  /* ── TOAST ── */
+  #toast { font-size: 12px; padding: 10px 14px; }
+
+  /* ── VALIDATION MESSAGE ── */
+  #validationMsg { font-size: 11px; }
+}
+/* ── FROSTED GLASS CONTAINER ── */
+.glass-container {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 860px);
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 28px;
+  box-shadow: 0 8px 40px rgba(26, 23, 20, 0.10), 0 2px 8px rgba(26,23,20,0.06);
+  padding: clamp(24px, 5vw, 48px) clamp(16px, 4vw, 40px);
+}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+
+<!-- ── MODEL LOADING STATUS PILL ── -->
+<div id="modelStatus">
+  <div class="ms-dot" id="msDot"></div>
+  <span id="msTxt">Loading AI Models...</span>
+</div>
+
+<!-- ── FACE LOADING OVERLAY (shown during comparison) ── -->
+<div id="faceLoadingOverlay">
+  <div class="flo-card">
+    <div class="flo-spinner"></div>
+    <div class="flo-title" id="floTitle">Analysing Face...</div>
+    <div class="flo-sub" id="floSub">Comparing with registered voters</div>
+  </div>
+</div>
+
+<!-- ── ALREADY VOTED POPUP ── -->
+<div id="alreadyVotedPopup">
+  <div class="avp-card">
+    <span class="avp-icon">🚫</span>
+    <div class="avp-title">Face Already Registered</div>
+    <p class="avp-sub">This face has already been registered<br>and voted in this session.</p>
+    <div class="avp-badge">
+      <div class="avp-dot"></div>
+      DUPLICATE DETECTED
+    </div>
+    <img class="avp-stored-photo" id="avpStoredPhoto" src="" alt="" style="display:none">
+    <div class="avp-score">
+      <div class="avp-score-label">FACE MATCH CONFIDENCE</div>
+      <div class="avp-score-val" id="avpScore">—</div>
+    </div>
+    <button class="avp-btn" onclick="closeAlreadyVotedPopup()">← Go Back</button>
+  </div>
+</div>
+
+<div class="glass-container"><div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="brand-title">🗳️ <strong>Secure</strong>Vote</div>
+<div class="brand-sub">Your face · Your vote · One blink</div>
+    </div>
+    <div style="text-align:right">
+      <div class="live-pill"><div class="live-dot" id="liveDot"></div><span id="liveTxt">OFFLINE</span></div>
+      <div class="session-id" id="sid"></div>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- 01 NAME -->
+  <section class="name-sec">
+    <div class="eyebrow"><span>01</span> IDENTITY SETUP</div>
+    <div class="name-panel" id="namePanel">
+      <div class="name-avatar">🪪</div>
+      <div class="name-field" id="nameField">
+        <label for="idInput">YOUR ID</label>
+        <input type="text" id="idInput" placeholder="Enter your ID..." maxlength="20" autocomplete="off">
+        <label for="nameInput" style="margin-top:6px;">YOUR FULL NAME</label>
+        <input type="text" id="nameInput" placeholder="Type your name here…" maxlength="36" autocomplete="off">
+      </div>
+      <div class="confirmed-row" id="confirmedRow">
+        <div class="check-badge">✓</div>
+        <div class="confirmed-name" id="confirmedName"></div>
+      </div>
+      <button class="btn-confirm" id="btnConfirm" onclick="confirmName()" disabled>Start Capture →</button>
+      <button class="btn-edit" id="btnEdit" onclick="editName()" style="display:none">Edit</button>
+    </div>
+  </section>
+
+  <!-- STATUS -->
+  <div class="status-strip" id="statusStrip">
+    <div class="s-left">
+      <div class="s-orb" id="sOrb"></div>
+      <span class="s-txt" id="sTxt">Enter your name to get started</span>
+    </div>
+    <div class="s-right">
+      <span style="font-family:'Azeret Mono',monospace;font-size:10px;color:var(--stone);letter-spacing:1px;">BLINK</span>
+      <div class="bpips"><div class="bp" id="bp1"></div><div class="bp" id="bp2"></div></div>
+      <span class="ear-tag" id="earTag">EAR —</span>
+    </div>
+  </div>
+
+  <!-- 02 CAMERA -->
+  <section class="cam-sec">
+    <div class="eyebrow"><span>02</span> LIVE CAMERA FEED</div>
+    <div class="cam-wrap">
+      <div class="cam-card" id="camCard">
+        <div class="corner c-tl"></div><div class="corner c-tr"></div>
+        <div class="corner c-bl"></div><div class="corner c-br"></div>
+        <video id="videoEl" autoplay muted playsinline></video>
+        <canvas id="snapCanvas" style="display:none"></canvas>
+        <div id="faceRect"></div>
+        <div class="scan" id="scanEl"></div>
+        <div id="flashEl"></div>
+        <div class="ear-bar" id="earBar">
+          <div class="ear-chip">L-EYE <span class="ev" id="earL">–</span></div>
+          <div class="ear-chip">R-EYE <span class="ev" id="earR">–</span></div>
+          <div class="ear-chip">AVG <span class="ev" id="earA">–</span></div>
+        </div>
+        <div id="permEl">
+          <div class="perm-ring">📷</div>
+          <h2>Camera Access</h2>
+          <p>Enable your camera to begin real-time face and blink detection</p>
+          <button class="btn-cam" onclick="startCamera()">Enable Camera</button>
+        </div>
+      </div>
+      <p class="cam-hint">😊 <em>Smile</em> and face the camera — then <em>blink</em> to capture</p>
+    </div>
+  </section>
+
+  <!-- 03 GALLERY -->
+  <section class="gallery-sec">
+    <div class="gallery-hdr">
+      <div class="eyebrow" style="margin-bottom:0"><span>03</span> CAPTURED PHOTOS</div>
+      <div class="gal-meta">
+        <span id="photoCount">0 photos</span>
+      </div>
+    </div>
+    <div id="gallery">
+      <div class="empty-st">
+        <div class="empty-ico">🌫</div>
+        <div class="empty-txt">No captures yet</div>
+        <div class="empty-sub">Your photos will appear here</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<p id="validationMsg" style="color:#ff4d2e;font-size:12px;margin-top:6px;position:relative;z-index:1;text-align:center;"></p>
+<div id="toast"><div class="tdot"></div><span id="toastMsg"></span></div>
+
+<!-- ── MEDIAPIPE ── -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+<!-- ── FACE-API.JS ── -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<script type="module">
+
+const API      = 'https://qr-authenticated-voting-system.onrender.com'
+const urlParams = new URLSearchParams(window.location.search)
+if (!urlParams.get('code') || !urlParams.get('group')) {
+  window.location.replace('qr.html')
+}
+const GROUP_ID  = urlParams.get('group')
+const qrData    = urlParams.get('code')
+
+/* ── FACE-API MODEL URL ── */
+const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model'
+
+/* ================= DOM ================= */
+const videoEl      = document.getElementById('videoEl')
+const snapCanvas   = document.getElementById('snapCanvas')
+const flashEl      = document.getElementById('flashEl')
+const faceRect     = document.getElementById('faceRect')
+const scanEl       = document.getElementById('scanEl')
+const camCard      = document.getElementById('camCard')
+const earBar       = document.getElementById('earBar')
+const earL         = document.getElementById('earL')
+const earR         = document.getElementById('earR')
+const earA         = document.getElementById('earA')
+const statusStrip  = document.getElementById('statusStrip')
+const sOrb         = document.getElementById('sOrb')
+const sTxt         = document.getElementById('sTxt')
+const earTag       = document.getElementById('earTag')
+const liveDot      = document.getElementById('liveDot')
+const liveTxt      = document.getElementById('liveTxt')
+const permEl       = document.getElementById('permEl')
+const gallery      = document.getElementById('gallery')
+const photoCount   = document.getElementById('photoCount')
+const btnEdit      = document.getElementById('btnEdit')
+const nameField    = document.getElementById('nameField')
+const confirmedRow = document.getElementById('confirmedRow')
+const confirmedName= document.getElementById('confirmedName')
+const toast        = document.getElementById('toast')
+const toastMsg     = document.getElementById('toastMsg')
+const idInput      = document.getElementById('idInput')
+const nameInput    = document.getElementById('nameInput')
+const btnConfirm   = document.getElementById('btnConfirm')
+const modelStatus  = document.getElementById('modelStatus')
+const msDot        = document.getElementById('msDot')
+const msTxt        = document.getElementById('msTxt')
+
+/* ================= ACTION BUTTONS ================= */
+const actionDiv = document.createElement('div')
+actionDiv.style.cssText = 'display:flex;gap:12px;margin-top:10px;position:relative;z-index:1;justify-content:center;'
+actionDiv.innerHTML = `
+  <button id="submitBtn" class="btn-confirm" disabled>Submit</button>
+  <button id="retakeBtn" class="btn-edit" style="display:none;">Retake</button>
+`
+gallery.parentElement.appendChild(actionDiv)
+
+const msg = document.getElementById('validationMsg')
+
+/* ================= STATE ================= */
+const S = {
+  userId:        '',
+  name:          '',
+  nameSet:       false,
+  camOn:         false,
+  eyesClosed:    false,
+  eyeFrames:     0,
+  total:         0,
+  lastCapture:   0,
+  validFrames:   0,
+  photoCaptured: false,
+  isValidPhoto:  false,
+  lastLandmarks: null,
+  lastFaceOk:    false,
+  faceApiReady:  false,          // ← NEW: tracks if models loaded
+  capturedDescriptor: null       // ← NEW: stores the 128D descriptor of captured photo
+}
+
+const EAR_T            = 0.21
+const EAR_F            = 3
+const CAPTURE_COOLDOWN = 3000
+const FACE_MATCH_THRESHOLD = 0.5  // ← NEW: lower = stricter matching
+
+const frameBuffer    = []
+const BUFFER_SIZE    = 8
+const landmarkHistory = []
+
+/* ================= LOAD FACE-API MODELS ================= */
+async function loadFaceApiModels() {
+  modelStatus.classList.add('show')
+  msTxt.textContent = 'Loading AI Models...'
+
+  try {
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ])
+
+    // ── WARM-UP: force faceapi to finish internal wiring ──
+    const warmupCanvas = document.createElement('canvas')
+    warmupCanvas.width  = 160
+    warmupCanvas.height = 160
+    const ctx = warmupCanvas.getContext('2d')
+    ctx.fillStyle = '#888'
+    ctx.fillRect(0, 0, 160, 160)
+
+    // Run a silent inference — result doesn't matter, just primes the engine
+    try {
+      await faceapi
+        .detectSingleFace(warmupCanvas)
+        .withFaceLandmarks()
+        .withFaceDescriptor()
+    } catch (_) { /* expected to find no face — that's fine */ }
+
+    S.faceApiReady = true  // ← set AFTER warm-up, not before
+    msDot.classList.add('ready')
+    msTxt.textContent = 'AI Ready ✓'
+    setTimeout(() => modelStatus.classList.remove('show'), 3000)
+    console.log('✅ face-api models loaded + warmed up')
+
+  } catch (err) {
+    msTxt.textContent = 'Model load failed'
+    console.error('face-api load error:', err)
+  }
+}
+
+// Start loading models immediately on page load
+loadFaceApiModels()
+
+/* ================= GET FACE DESCRIPTOR FROM CANVAS ================= */
+async function getFaceDescriptor(canvas) {
+  if (!S.faceApiReady) return null
+
+  try {
+    // ── Mirror the canvas so descriptor matches stored photos ──
+    const mirrored = document.createElement('canvas')
+    mirrored.width  = canvas.width
+    mirrored.height = canvas.height
+    const ctx = mirrored.getContext('2d')
+    ctx.translate(canvas.width, 0)
+    ctx.scale(-1, 1)
+    ctx.drawImage(canvas, 0, 0)
+
+    const img = await canvasToImage(mirrored)
+
+    const detection = await faceapi
+      .detectSingleFace(img)
+      .withFaceLandmarks()
+      .withFaceDescriptor()
+
+    if (!detection) {
+      console.log('face-api: no face found in canvas')
+      return null
+    }
+
+    console.log('face-api: descriptor generated ✓', detection.descriptor.length, 'dims')
+    return detection.descriptor
+  } catch (err) {
+    console.error('face-api descriptor error:', err)
+    return null
+  }
+}
+/* ── Helper: canvas → Image element ── */
+function canvasToImage(canvas) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.src    = canvas.toDataURL('image/jpeg', 0.92)
+  })
+}
+
+/* ================= COMPARE DESCRIPTOR AGAINST DB ================= */
+async function checkFaceDuplicate(descriptor) {
+  if (!descriptor || !GROUP_ID) return null
+
+  try {
+    const res  = await fetch(`${API}/api/voters/descriptors?group=${GROUP_ID}`)
+    const data = await res.json()
+
+    if (!res.ok || !data.voters?.length) return null
+
+    for (const voter of data.voters) {
+      if (!voter.face_descriptor) continue
+
+      // ── FIX: safely reconstruct Float32Array from any JSON format ──
+      let storedDescriptor
+      try {
+        const arr = Array.isArray(voter.face_descriptor)
+          ? voter.face_descriptor
+          : Object.values(voter.face_descriptor)
+        storedDescriptor = new Float32Array(arr)
+      } catch (e) {
+        console.warn('Bad descriptor for', voter.student_id, e)
+        continue
+      }
+
+      // ── FIX: skip if lengths don't match (causes NaN) ──
+      if (storedDescriptor.length !== descriptor.length) {
+        console.warn(`Descriptor length mismatch: stored=${storedDescriptor.length} new=${descriptor.length}`)
+        continue
+      }
+
+      const distance   = faceapi.euclideanDistance(descriptor, storedDescriptor)
+      const confidence = Math.round(Math.max(0, (1 - distance)) * 100)
+
+      console.log(`↔ ${voter.student_id}: dist=${distance.toFixed(4)} conf=${confidence}%`)
+
+      // ── FIX: NaN guard ──
+      if (isNaN(distance)) {
+        console.warn('NaN distance — skipping', voter.student_id)
+        continue
+      }
+
+      if (distance < FACE_MATCH_THRESHOLD) {
+        return {
+          studentId:    voter.student_id,
+          studentName:  voter.student_name,
+          faceImageUrl: voter.face_image_url,
+          distance,
+          confidence
+        }
+      }
+    }
+
+    return null
+  } catch (err) {
+    console.error('Face duplicate check error:', err)
+    return null
+  }
+}
+
+/* ================= SHOW ALREADY VOTED POPUP ================= */
+function showAlreadyVotedPopup(matchInfo) {
+  const popup      = document.getElementById('alreadyVotedPopup')
+  const scoreEl    = document.getElementById('avpScore')
+  const storedPhoto = document.getElementById('avpStoredPhoto')
+
+  scoreEl.textContent = matchInfo.confidence + '% match'
+
+  if (matchInfo.faceImageUrl) {
+    const match = matchInfo.faceImageUrl.match(/\/storage\/v1\/object\/(?:sign|public)\/voting-images\/(.+?)(\?|$)/)
+    storedPhoto.src           = match ? `${API}/api/image/${match[1]}` : matchInfo.faceImageUrl
+    storedPhoto.style.display = 'block'
+  } else {
+    storedPhoto.style.display = 'none'
+  }
+
+  popup.classList.add('show')
+}
+
+window.closeAlreadyVotedPopup = function() {
+  document.getElementById('alreadyVotedPopup').classList.remove('show')
+  // Reset so they can retake
+  S.photoCaptured     = false
+  S.isValidPhoto      = false
+  S.capturedDescriptor = null
+  gallery.innerHTML   = ''
+  photoCount.textContent = '0 photos'
+  msg.textContent     = ''
+  document.getElementById('submitBtn').disabled      = true
+  document.getElementById('retakeBtn').style.display = 'none'
+  setStatus('ready', '● Ready — blink again')
+}
+
+/* ================= ANTI-SPOOF ================= */
+function hasRealSkinTexture(canvas) {
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width, h = canvas.height
+  const rx = Math.floor(w * 0.3), ry = Math.floor(h * 0.2)
+  const rw = Math.floor(w * 0.4), rh = Math.floor(h * 0.4)
+  const data = ctx.getImageData(rx, ry, rw, rh).data
+  const samples = []
+  for (let i = 0; i < data.length; i += 16) {
+    samples.push((data[i] + data[i+1] + data[i+2]) / 3)
+  }
+  const mean     = samples.reduce((a, b) => a + b, 0) / samples.length
+  const variance = samples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / samples.length
+  console.log('Skin texture variance:', variance)
+  return variance > 60
+}
+
+function hasNaturalMovement() {
+  if (landmarkHistory.length < 20) return true
+  const xs = landmarkHistory.map(p => p.x)
+  const ys = landmarkHistory.map(p => p.y)
+  const xMean = xs.reduce((a, b) => a + b) / xs.length
+  const yMean = ys.reduce((a, b) => a + b) / ys.length
+  const xVar  = xs.reduce((a, b) => a + Math.pow(b - xMean, 2), 0) / xs.length
+  const yVar  = ys.reduce((a, b) => a + Math.pow(b - yMean, 2), 0) / ys.length
+  const totalVar = xVar + yVar
+  console.log('Movement variance:', totalVar)
+  return totalVar > 0.00002 && totalVar < 0.003
+}
+
+function detectScreenBanding(canvas) {
+  const ctx = canvas.getContext('2d')
+  const w   = canvas.width
+  const data = ctx.getImageData(0, Math.floor(canvas.height * 0.4), w, 1).data
+  let transitions = 0, prevR = data[0]
+  for (let i = 4; i < data.length; i += 4) {
+    if (Math.abs(data[i] - prevR) > 15) transitions++
+    prevR = data[i]
+  }
+  const bandingScore = transitions / (w / 4)
+  console.log('Banding score:', bandingScore)
+  return bandingScore > 0.15
+}
+
+/* ================= STATUS ================= */
+function setStatus(type, text) {
+  const map = { idle: '', ready: 's-ready', captured: 's-captured' }
+  statusStrip.className = 'status-strip ' + (map[type] || '')
+  sOrb.className        = 's-orb ' + (type === 'idle' ? '' : type)
+  sTxt.textContent      = text
+}
+
+document.getElementById('sid').textContent = 'SID-' + Math.random().toString(36).slice(2, 8).toUpperCase()
+
+/* ================= NAME ================= */
+nameInput.addEventListener('input', () => {
+  btnConfirm.disabled = nameInput.value.trim().length < 2
+})
+
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && nameInput.value.trim().length >= 2) confirmName()
+})
+
+function confirmName() {
+  const n  = nameInput.value.trim()
+  const id = idInput.value.trim()
+
+  if (n.length < 2 || id.length < 1) return
+
+  S.name    = n
+  S.userId  = id
+  S.nameSet = true
+
+  nameField.style.display    = 'none'
+  btnConfirm.style.display   = 'none'
+
+  confirmedName.textContent  = n + ' (' + id + ')'
+  confirmedRow.classList.add('show')
+
+  btnEdit.style.display = ''
+  setStatus('idle', 'Enable the camera to begin →')
+  showToast('👋 Hello, ' + n + '!')
+}
+
+function editName() {
+  S.nameSet = false
+  confirmedRow.classList.remove('show')
+  btnEdit.style.display    = 'none'
+  nameField.style.display  = ''
+  btnConfirm.style.display = ''
+  nameInput.value          = S.name
+  idInput.value            = S.userId
+  btnConfirm.disabled      = false
+  nameInput.focus()
+}
+
+/* ================= CAMERA ================= */
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+    })
+    videoEl.srcObject = stream
+    await new Promise(r => videoEl.onloadedmetadata = r)
+    await videoEl.play()
+    S.camOn = true
+    permEl.style.display = 'none'
+    liveDot.className    = 'live-dot on'
+    liveTxt.textContent  = 'LIVE'
+    if (S.nameSet) setStatus('ready', '● Ready — face the camera')
+    initMP()
+  } catch (e) {
+    permEl.querySelector('p').textContent = 'Camera access denied.'
+  }
+}
+
+/* ================= FACE CHECK (MEDIAPIPE) ================= */
+const LE = [362, 385, 387, 263, 373, 380]
+const RE = [33, 160, 158, 133, 153, 144]
+
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y) }
+
+function calcEAR(lm, eye) {
+  const [p1, p2, p3, p4, p5, p6] = eye.map(i => lm[i])
+  return (dist(p2, p6) + dist(p3, p5)) / (2 * dist(p1, p4))
+}
+
+function isSmiling(lm) {
+  const leftCorner  = lm[61]
+  const rightCorner = lm[291]
+  const leftEye     = lm[33]
+  const rightEye    = lm[263]
+  const mouthWidth  = Math.abs(rightCorner.x - leftCorner.x)
+  const eyeDist     = Math.abs(rightEye.x - leftEye.x)
+  const smileRatio  = mouthWidth / eyeDist
+  console.log('Smile ratio:', smileRatio)
+  return smileRatio > 0.48
+}
+
+function isFaceProper(lm) {
+  const leftEye  = lm[33]
+  const rightEye = lm[263]
+  const nose     = lm[1]
+  const mouth    = lm[13]
+
+  let mnX = 1, mxX = 0, mnY = 1, mxY = 0
+  lm.forEach(p => {
+    mnX = Math.min(mnX, p.x); mxX = Math.max(mxX, p.x)
+    mnY = Math.min(mnY, p.y); mxY = Math.max(mxY, p.y)
+  })
+
+  const width  = mxX - mnX
+  const height = mxY - mnY
+
+  if (width < 0.30 || height < 0.30) return false
+
+  const eyeDist = Math.abs(leftEye.x - rightEye.x)
+  if (eyeDist < 0.22) return false
+
+  if (!(nose.x > leftEye.x && nose.x < rightEye.x)) return false
+  if (!(mouth.y > nose.y)) return false
+
+  const noseToEye   = Math.abs(nose.y - leftEye.y)
+  const mouthToNose = Math.abs(mouth.y - nose.y)
+  if (noseToEye < 0.05 || mouthToNose < 0.05) return false
+
+  const faceCenterX = (mnX + mxX) / 2
+  if (Math.abs(faceCenterX - 0.5) > 0.15) return false
+
+  const faceCenterY = (mnY + mxY) / 2
+  if (Math.abs(faceCenterY - 0.5) > 0.2) return false
+
+  return true
+}
+
+function initMP() {
+  const mesh = new FaceMesh({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${f}`
+  })
+  mesh.setOptions({ maxNumFaces: 1, refineLandmarks: true })
+  mesh.onResults(onFrame)
+  const cam = new Camera(videoEl, { onFrame: async () => { await mesh.send({ image: videoEl }) } })
+  cam.start()
+}
+
+/* ================= BLINK DETECTION ================= */
+function onFrame(results) {
+  if (S.camOn) {
+    const c = document.createElement('canvas')
+    c.width  = videoEl.videoWidth
+    c.height = videoEl.videoHeight
+    c.getContext('2d').drawImage(videoEl, 0, 0)
+    frameBuffer.push(c)
+    if (frameBuffer.length > BUFFER_SIZE) frameBuffer.shift()
+  }
+
+  if (!S.nameSet) return
+
+  if (results.multiFaceLandmarks?.length) {
+    const lm = results.multiFaceLandmarks[0]
+    S.lastLandmarks = lm
+
+    landmarkHistory.push({ x: lm[1].x, y: lm[1].y })
+    if (landmarkHistory.length > 30) landmarkHistory.shift()
+
+    const faceOk = isFaceProper(lm)
+    S.lastFaceOk = faceOk
+
+    if (!faceOk) {
+      S.validFrames = 0
+      setStatus('idle', '⚠️ Show full face (eyes, nose, mouth)')
+      return
+    }
+
+    S.validFrames++
+    if (S.validFrames > 15) S.validFrames = 15
+
+    if (S.validFrames < 10) {
+      setStatus('idle', '⏳ Hold still...')
+      return
+    }
+
+    setStatus('ready', '● Smile and blink to capture 😊')
+
+    const lv = calcEAR(lm, LE)
+    const rv = calcEAR(lm, RE)
+    const av = (lv + rv) / 2
+
+    if (av < EAR_T) {
+      S.eyeFrames++
+      S.eyesClosed = true
+    } else {
+      if (S.eyesClosed && S.eyeFrames >= EAR_F) {
+        const now = Date.now()
+        if (now - S.lastCapture > CAPTURE_COOLDOWN) {
+          if (!S.photoCaptured) {
+            captureBestPhoto()
+            S.lastCapture = now
+          }
+        }
+      }
+      S.eyesClosed = false
+      S.eyeFrames  = 0
+    }
+
+  } else {
+    setStatus('idle', '◌ No face detected')
+  }
+}
+
+/* ================= VALIDATE FACE (MEDIAPIPE) ================= */
+async function validateCapturedFace(canvas) {
+  return new Promise(async (resolve) => {
+    const mesh = new FaceMesh({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${f}`
+    })
+    mesh.setOptions({ maxNumFaces: 1, refineLandmarks: true })
+    mesh.onResults((res) => {
+      if (!res.multiFaceLandmarks?.length) { resolve(false); return }
+      const lm = res.multiFaceLandmarks[0]
+      if (!isFaceProper(lm)) { resolve(false); return }
+      const lv = calcEAR(lm, LE)
+      const rv = calcEAR(lm, RE)
+      const av = (lv + rv) / 2
+      console.log('Captured EAR:', av)
+      if (av < 0.18) { resolve(false); return }
+      const smiling = isSmiling(lm)
+      console.log('Smiling:', smiling)
+      if (!smiling) { resolve(false); return }
+      resolve(true)
+    })
+    await mesh.send({ image: canvas })
+  })
+}
+
+/* ================= CAPTURE ================= */
+function captureFrame() {
+  const c = document.createElement('canvas')
+  c.width  = videoEl.videoWidth
+  c.height = videoEl.videoHeight
+  c.getContext('2d').drawImage(videoEl, 0, 0)
+  return c
+}
+
+function getSharpness(canvas) {
+  const img = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height)
+  let sum = 0
+  for (let i = 0; i < img.data.length; i += 4) {
+    sum += Math.abs(0.299 * img.data[i] + 0.587 * img.data[i + 1] + 0.114 * img.data[i + 2])
+  }
+  return sum
+}
+
+function checkFaceRegionPixels(canvas) {
+  const ctx  = canvas.getContext('2d')
+  const w    = canvas.width
+  const h    = canvas.height
+  const rx   = Math.floor(w * 0.25)
+  const ry   = Math.floor(h * 0.15)
+  const rw   = Math.floor(w * 0.50)
+  const rh   = Math.floor(h * 0.60)
+  const data = ctx.getImageData(rx, ry, rw, rh).data
+  let skinPixels = 0, total = 0
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i+1], b = data[i+2]
+    total++
+    if (r > 60 && g > 40 && b > 20 && r > g && r > b && (r - g) > 10 && Math.abs(r - g) > 5) {
+      skinPixels++
+    }
+  }
+  console.log('Skin ratio:', skinPixels / total)
+  return (skinPixels / total) > 0.08
+}
+
+/* ── Show/hide the face loading overlay ── */
+function showFaceLoading(title, sub) {
+  document.getElementById('floTitle').textContent = title
+  document.getElementById('floSub').textContent   = sub
+  document.getElementById('faceLoadingOverlay').classList.add('show')
+}
+
+function hideFaceLoading() {
+  document.getElementById('faceLoadingOverlay').classList.remove('show')
+}
+
+async function captureBestPhoto() {
+  if (S.photoCaptured) return
+
+   if (!S.faceApiReady) {
+    showToast('⏳ AI models still loading — please wait a moment')
+    return
+  }
+  
+  if (!S.lastFaceOk || !S.lastLandmarks) {
+    showToast('⚠️ Face not detected at blink moment')
+    return
+  }
+
+  flashEl.style.opacity = '1'
+  setTimeout(() => flashEl.style.opacity = '0', 100)
+
+  const frame = frameBuffer.length >= 5
+    ? frameBuffer[frameBuffer.length - 8]
+    : captureFrame()
+
+  if (getSharpness(frame) < 5000000) {
+    S.photoCaptured = true
+    addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+    validateResult(false, 'Image too blurry')
+    return
+  }
+
+  if (!checkFaceRegionPixels(frame)) {
+    S.photoCaptured = true
+    addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+    validateResult(false, 'Face hidden or covered')
+    return
+  }
+
+  const mpValid = await validateCapturedFace(frame)
+  if (!mpValid) {
+    S.photoCaptured = true
+    addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+    validateResult(false, 'Please smile while blinking to capture')
+    return
+  }
+
+  if (!hasRealSkinTexture(frame)) {
+    S.photoCaptured = true
+    addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+    validateResult(false, '⚠️ Spoof detected: flat image (no skin texture)')
+    return
+  }
+
+  if (!hasNaturalMovement()) {
+    S.photoCaptured = true
+    addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+    validateResult(false, '⚠️ Please move naturally — static image detected')
+    return
+  }
+
+  if (detectScreenBanding(frame)) {
+    S.photoCaptured = true
+    addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+    validateResult(false, '⚠️ Screen display detected — use your real face')
+    return
+  }
+
+  // ── All basic checks passed — now do FACE DUPLICATE CHECK ──
+  S.photoCaptured = true
+  addCard(frame.toDataURL('image/jpeg', 0.92), S.name, 1)
+
+  if (S.faceApiReady) {
+    showFaceLoading('Analysing Face...', 'Generating face signature')
+
+    // Step 1: Generate descriptor for captured photo
+    const descriptor = await getFaceDescriptor(frame)
+    S.capturedDescriptor = descriptor
+
+    if (descriptor) {
+      // Step 2: Compare against all stored descriptors in this group
+      document.getElementById('floSub').textContent = 'Comparing with registered voters...'
+      const match = await checkFaceDuplicate(descriptor)
+
+      hideFaceLoading()
+
+      if (match) {
+        // ── DUPLICATE FACE FOUND ──
+        console.log('🚫 Duplicate face detected:', match)
+        showAlreadyVotedPopup(match)
+        return  // Don't proceed to validateResult
+      }
+    } else {
+      hideFaceLoading()
+      console.log('Could not generate descriptor — proceeding without face check')
+    }
+  }
+
+  // No duplicate found — proceed normally
+  S.isValidPhoto = true
+  validateResult(true, null)
+}
+
+/* ================= VALIDATION ================= */
+function validateResult(isValid, reason) {
+  const submitBtn = document.getElementById('submitBtn')
+  const retakeBtn = document.getElementById('retakeBtn')
+
+  if (isValid) {
+    submitBtn.disabled = false
+    msg.textContent    = '✅ Perfect photo!'
+    msg.style.color    = '#22c55e'
+  } else {
+    submitBtn.disabled = true
+    msg.textContent    = '❌ ' + (reason || 'Face not clear') + ' — please retake'
+    msg.style.color    = '#ff4d2e'
+  }
+  retakeBtn.style.display = 'inline-block'
+}
+
+/* ================= EVENTS ================= */
+document.addEventListener('click', async e => {
+
+  /* ── RETAKE ── */
+  if (e.target.id === 'retakeBtn') {
+    S.lastLandmarks      = null
+    S.lastFaceOk         = false
+    S.photoCaptured      = false
+    S.isValidPhoto       = false
+    S.validFrames        = 0
+    S.capturedDescriptor = null
+
+    gallery.innerHTML        = ''
+    photoCount.textContent   = '0 photos'
+    msg.textContent          = ''
+
+    document.getElementById('submitBtn').disabled      = true
+    document.getElementById('retakeBtn').style.display = 'none'
+
+    setStatus('ready', '● Ready — blink again')
+  }
+
+  /* ── SUBMIT ── */
+  if (e.target.id === 'submitBtn') {
+    const submitBtn       = document.getElementById('submitBtn')
+    submitBtn.disabled    = true
+    submitBtn.textContent = 'Saving...'
+
+    try {
+      const studentId   = S.userId
+      const studentName = S.name
+
+      if (!studentId || !studentName) {
+        await Notify.alert('Student ID or Name missing!', 'error')
+        submitBtn.disabled    = false
+        submitBtn.textContent = 'Submit'
+        return
+      }
+
+      if (!GROUP_ID) {
+        await Notify.alert('Group ID missing! Please scan QR again.', 'error')
+        submitBtn.disabled    = false
+        submitBtn.textContent = 'Submit'
+        return
+      }
+
+      const formData = new FormData()
+      formData.append('groupId',     GROUP_ID)
+      formData.append('studentId',   studentId)
+      formData.append('studentName', studentName)
+
+      // ── Attach face descriptor if available ──
+      if (S.capturedDescriptor) {
+        formData.append('faceDescriptor', JSON.stringify(Array.from(S.capturedDescriptor)))
+      }
+
+      const photoCard = document.querySelector('.photo-card img')
+      if (photoCard?.src) {
+        const blob = await (await fetch(photoCard.src)).blob()
+        formData.append('face', blob, 'face.jpg')
+      }
+
+      const res  = await fetch(`${API}/api/voters/register`, {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        await Notify.alert(data.error, 'error')
+        submitBtn.disabled    = false
+        submitBtn.textContent = 'Submit'
+        return
+      }
+
+      console.log('✅ Voter saved!')
+
+      window.location.href = 'home.html'
+        + '?id='    + encodeURIComponent(studentId)
+        + '&name='  + encodeURIComponent(studentName)
+        + '&group=' + encodeURIComponent(GROUP_ID)
+        + '&canVote=true'
+
+    } catch (err) {
+      console.error('Submit error:', err)
+      await Notify.alert('Something went wrong: ' + err.message, 'error')
+      submitBtn.disabled    = false
+      submitBtn.textContent = 'Submit'
+    }
+  }
+})
+
+/* ================= GALLERY ================= */
+function addCard(src, name, num) {
+  gallery.innerHTML = ''
+  const c = document.createElement('div')
+  c.className = 'photo-card'
+  c.innerHTML = `<img src="${src}"><div class="photo-info"><div class="photo-name"><span>${name}</span></div></div>`
+  gallery.appendChild(c)
+  photoCount.textContent = '1 photo'
+}
+
+/* ================= TOAST ================= */
+let toastT
+function showToast(m) {
+  toastMsg.textContent = m
+  toast.classList.add('show')
+  clearTimeout(toastT)
+  toastT = setTimeout(() => toast.classList.remove('show'), 3000)
+}
+
+/* ================= HANDLE QR DATA ================= */
+function handleQRData(data) {
+  const clean = data.trim()
+  const parts = clean.split('|').map(p => p.trim())
+
+  const id   = parts[0] || ''
+  const name = parts[1] || ''
+
+  console.log('ID:', id)
+  console.log('NAME:', name)
+
+  if (idInput) {
+    idInput.value               = id
+    idInput.readOnly            = true
+    idInput.style.opacity       = '0.7'
+    idInput.style.pointerEvents = 'none'
+  }
+
+  if (nameInput) {
+    if (name) {
+      nameInput.value               = name
+      nameInput.readOnly            = true
+      nameInput.style.opacity       = '0.7'
+      nameInput.style.pointerEvents = 'none'
+    } else {
+      nameInput.readOnly            = false
+      nameInput.style.opacity       = '1'
+      nameInput.style.pointerEvents = 'auto'
+    }
+  }
+
+  btnConfirm.disabled = false
+}
+
+/* ================= EXPOSE ================= */
+window.startCamera  = startCamera
+window.confirmName  = confirmName
+window.editName     = editName
+
+if (qrData) handleQRData(qrData)
+
+</script>
+</div><!-- /.glass-container -->
+<script src="/notifications.js"></script>
+</body>
+</html>

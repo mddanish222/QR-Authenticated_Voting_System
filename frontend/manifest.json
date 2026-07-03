@@ -1,0 +1,20 @@
+{
+  "name": "VoterScan",
+  "short_name": "VoterScan",
+  "description": "Smart Voting Authentication System",
+  "start_url": "/qr.html",
+  "display": "standalone",
+  "background_color": "#f0f2f7",
+  "theme_color": "#1a56db",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": []
+}

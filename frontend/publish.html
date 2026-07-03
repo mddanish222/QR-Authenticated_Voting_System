@@ -1,0 +1,2776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a56db">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VoterScan">
+<link rel="apple-touch-icon" href="/logo.png">
+<title>Live Results — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --text-xs  : 0.72rem;
+  --text-sm  : 0.875rem;
+  --text-base: 1rem;
+  --r-sm     : 8px;
+  --r-md     : 12px;
+
+  --glass-card  : rgba(255,255,255,0.82);
+  --glass-inner : rgba(255,255,255,0.70);
+  --glass-border: rgba(255,255,255,0.90);
+  --glass-header: rgba(255,255,255,0.85);
+
+  --clr-text      : #0f172a;
+  --clr-muted     : #64748b;
+  --clr-blue      : #1a56db;
+  --clr-green     : #059669;
+  --clr-red       : #dc2626;
+  --clr-gold      : #d97706;
+  --clr-purple    : #6366f1;
+  --clr-purple2   : #818cf8;
+
+  --input-bg      : rgba(255,255,255,0.62);
+  --input-border  : rgba(100,130,180,0.28);
+  --input-focus-bd: rgba(26,86,219,0.45);
+  --input-focus-bg: rgba(255,255,255,0.88);
+}
+
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--clr-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  background: #f0f2f7 url('bgg.png') center/cover fixed;
+}
+
+img { display: block; max-width: 100%; }
+a   { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--glass-header);
+  backdrop-filter: blur(20px) saturate(2);
+  -webkit-backdrop-filter: blur(20px) saturate(2);
+  border-bottom: 1px solid rgba(100,130,180,0.18);
+  padding: 0 clamp(16px, 4%, 32px);
+  height: clamp(52px, 9vw, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(10px, 2vw, 16px);
+  box-shadow: 0 2px 16px rgba(15,23,42,0.07);
+}
+
+.header-left  { display: flex; align-items: center; gap: clamp(10px, 2vw, 16px); flex-shrink: 0; }
+.header-right { display: flex; align-items: center; gap: clamp(8px, 1.5vw, 12px); flex-wrap: wrap; }
+
+.logo-mark {
+  width: clamp(30px, 5vw, 36px);
+  height: clamp(30px, 5vw, 36px);
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(14px, 3vw, 18px);
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(99,102,241,0.28);
+}
+
+.header-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(13px, 2.5vw, 17px);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(5,150,105,0.10);
+  border: 1px solid rgba(5,150,105,0.28);
+  border-radius: 20px;
+  padding: 5px clamp(8px, 1.5vw, 12px);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #059669;
+  text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.live-dot {
+  width: 7px; height: 7px;
+  background: #059669;
+  border-radius: 50%;
+  animation: pub-pulse 1.5s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pub-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+.refresh-info {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--clr-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.countdown-num {
+  color: var(--clr-purple);
+  font-weight: 500;
+  min-width: 14px;
+  text-align: center;
+}
+
+.btn-refresh {
+  background: var(--glass-inner);
+  border: 1px solid var(--glass-border);
+  color: #334155;
+  border-radius: var(--r-sm);
+  padding: 7px clamp(10px, 2vw, 14px);
+  font-size: var(--text-xs);
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+.btn-refresh:hover { background: rgba(255,255,255,0.85); border-color: rgba(26,86,219,0.35); color: var(--clr-blue); }
+.btn-refresh.spinning .refresh-icon { animation: g-spin 0.6s linear; }
+@keyframes g-spin { to { transform: rotate(360deg); } }
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(100,130,180,0.28);
+  color: var(--clr-muted);
+  border-radius: var(--r-sm);
+  padding: 7px clamp(10px, 2vw, 14px);
+  font-size: var(--text-xs);
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 36px;
+  white-space: nowrap;
+}
+.btn-logout:hover { border-color: rgba(220,38,38,0.45); color: var(--clr-red); }
+
+/* ═══════════════════════════════════════════
+   PAGE LAYOUT
+═══════════════════════════════════════════ */
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 40px) clamp(14px, 3%, 24px) clamp(40px, 6vw, 80px);
+}
+
+/* ═══════════════════════════════════════════
+   SECTION LABEL
+═══════════════════════════════════════════ */
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+  margin-bottom: clamp(12px, 2vw, 16px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(100,130,180,0.18);
+}
+
+/* ═══════════════════════════════════════════
+   GLASS CARD BASE
+═══════════════════════════════════════════ */
+.glass-card {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.55) inset,
+    0 8px 32px rgba(15,23,42,0.08),
+    0 2px 8px rgba(15,23,42,0.05);
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.90), transparent);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   GROUP SELECTOR
+═══════════════════════════════════════════ */
+.group-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+  margin-bottom: clamp(24px, 4vw, 36px);
+}
+
+.group-card {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid var(--glass-border);
+  border-radius: 14px;
+  padding: clamp(12px, 2.5vw, 16px) clamp(14px, 2.5vw, 18px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+}
+
+.group-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99,102,241,0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.group-card:hover { border-color: rgba(99,102,241,0.35); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(15,23,42,0.12); }
+.group-card:hover::before { opacity: 1; }
+.group-card.selected { border-color: #6366f1; box-shadow: 0 0 0 1px #6366f1, 0 8px 32px rgba(99,102,241,0.18); }
+.group-card.selected::before { opacity: 1; }
+
+/* hidden cards for pagination */
+.group-card.gs-hidden {
+  display: none;
+}
+
+.group-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+
+.group-college {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(12px, 2.2vw, 14px);
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-sec {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--clr-purple);
+  background: rgba(99,102,241,0.10);
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 5px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.group-date { font-family: 'DM Mono', monospace; font-size: var(--text-sm); font-weight: 500; color: #1e293b; margin-bottom: 4px; }
+.group-time { font-family: 'DM Mono', monospace; font-size: var(--text-xs); color: var(--clr-muted); margin-bottom: 12px; }
+
+.group-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.group-status.active   { background: rgba(5,150,105,0.10); color: #059669; border: 1px solid rgba(5,150,105,0.22); }
+.group-status.ended    { background: rgba(100,116,139,0.10); color: #64748b; border: 1px solid rgba(100,116,139,0.20); }
+.group-status.upcoming { background: rgba(217,119,6,0.10); color: #d97706; border: 1px solid rgba(217,119,6,0.22); }
+
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.group-status.active .status-dot { animation: pub-pulse 1.5s infinite; }
+
+.group-card-tick {
+  display: none;
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 20px; height: 20px;
+  background: #6366f1;
+  border-radius: 50%;
+  align-items: center; justify-content: center;
+  font-size: 11px;
+  color: white;
+}
+.group-card.selected .group-card-tick { display: flex; }
+.group-card.selected .group-sec { visibility: hidden; }
+
+/* ── Show More Sessions button ── */
+.gs-show-more-wrap {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.btn-gs-show-more {
+  background: rgba(99,102,241,0.07);
+  border: 1px dashed rgba(99,102,241,0.35);
+  border-radius: 10px;
+  padding: 10px 28px;
+  color: var(--clr-purple);
+  font-family: 'Syne', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.btn-gs-show-more:hover {
+  background: rgba(99,102,241,0.13);
+  border-color: var(--clr-purple);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════ */
+#dashContent { display: none; }
+#dashContent.show { display: block; animation: pub-fadeUp 0.4s ease both; }
+
+@keyframes pub-fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
+   INFO STRIP
+═══════════════════════════════════════════ */
+.info-strip {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: clamp(12px, 2.5vw, 16px) clamp(16px, 3vw, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: clamp(12px, 2vw, 16px);
+  margin-bottom: clamp(20px, 3.5vw, 32px);
+  box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+}
+
+.info-group { display: flex; flex-direction: column; gap: 2px; min-width: 80px; }
+
+.info-label {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+}
+
+.info-value {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(13px, 2.2vw, 15px);
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* ═══════════════════════════════════════════
+   STATS ROW
+═══════════════════════════════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(10px, 2vw, 16px);
+  margin-bottom: clamp(20px, 3.5vw, 32px);
+}
+
+.stat-card {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: clamp(14px, 3vw, 20px) clamp(14px, 3vw, 24px);
+  animation: pub-fadeUp 0.4s ease both;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.10s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+
+.stat-icon  { font-size: clamp(18px, 3.5vw, 22px); margin-bottom: 10px; }
+.stat-num   { font-family: 'Syne', sans-serif; font-size: clamp(22px, 5vw, 32px); font-weight: 800; color: #0f172a; line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: var(--text-xs); color: var(--clr-muted); }
+
+/* ═══════════════════════════════════════════
+   MAIN GRID
+═══════════════════════════════════════════ */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(14px, 2.5vw, 20px);
+  margin-bottom: clamp(20px, 3.5vw, 32px);
+}
+
+/* ═══════════════════════════════════════════
+   DASH CARDS
+═══════════════════════════════════════════ */
+.dash-card {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+  animation: pub-fadeUp 0.4s ease both;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+}
+
+.card-head {
+  padding: clamp(14px, 2.5vw, 18px) clamp(14px, 2.5vw, 20px) clamp(10px, 2vw, 14px);
+  border-bottom: 1px solid rgba(100,130,180,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-title { font-family: 'Syne', sans-serif; font-size: clamp(12px, 2.2vw, 14px); font-weight: 700; color: #0f172a; }
+
+.card-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  letter-spacing: 1px;
+  color: var(--clr-purple);
+  background: rgba(99,102,241,0.10);
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.card-body { padding: clamp(14px, 2.5vw, 20px); }
+
+/* ═══════════════════════════════════════════
+   PIE CHART
+═══════════════════════════════════════════ */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.chart-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.chart-center-num   { font-family: 'Syne', sans-serif; font-size: clamp(20px, 4vw, 28px); font-weight: 800; color: #0f172a; line-height: 1; }
+.chart-center-label { font-size: var(--text-xs); color: var(--clr-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+.legend { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.legend-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.legend-name { font-size: var(--text-sm); color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.legend-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.legend-count { font-family: 'DM Mono', monospace; font-size: var(--text-sm); color: #0f172a; font-weight: 500; }
+.legend-pct   { font-family: 'DM Mono', monospace; font-size: var(--text-xs); color: var(--clr-muted); min-width: 36px; text-align: right; }
+
+/* ═══════════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════════ */
+.leaderboard { display: flex; flex-direction: column; gap: 10px; }
+
+.leader-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 12px);
+  padding: clamp(10px, 2vw, 12px) clamp(10px, 2vw, 14px);
+  background: var(--glass-inner);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+
+.leader-item.top { border-color: rgba(217,119,6,0.35); background: rgba(245,158,11,0.06); }
+
+.leader-rank { font-family: 'Syne', sans-serif; font-size: clamp(14px, 3vw, 18px); font-weight: 800; color: var(--clr-muted); min-width: 28px; text-align: center; }
+.leader-item.top .leader-rank { color: #d97706; }
+
+.leader-photo {
+  width: clamp(32px, 6vw, 40px);
+  height: clamp(32px, 6vw, 40px);
+  border-radius: 50%;
+  border: 2px solid rgba(100,130,180,0.25);
+  background: rgba(255,255,255,0.55);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(14px, 3vw, 18px);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.leader-photo img { width: 100%; height: 100%; object-fit: cover; }
+.leader-info { flex: 1; min-width: 0; }
+.leader-name { font-size: var(--text-sm); font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-bar-wrap { height: 4px; background: rgba(100,130,180,0.15); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.leader-bar  { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+.leader-votes { font-family: 'DM Mono', monospace; font-size: var(--text-sm); color: #0f172a; font-weight: 500; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════
+   VOTER TABLE
+═══════════════════════════════════════════ */
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr 80px 100px;
+  align-items: center;
+}
+
+.table-head {
+  padding: 10px clamp(10px, 2vw, 16px);
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+  border-bottom: 1px solid rgba(100,130,180,0.15);
+}
+
+.table-row {
+  padding: clamp(10px, 2vw, 12px) clamp(10px, 2vw, 16px);
+  border-bottom: 1px solid rgba(100,130,180,0.10);
+  transition: background 0.15s;
+}
+.table-row:hover { background: rgba(255,255,255,0.35); }
+.table-row:last-child { border-bottom: none; }
+
+/* voter log hidden rows for pagination */
+.voter-row-hidden { display: none !important; }
+
+.row-num  { font-family: 'DM Mono', monospace; font-size: var(--text-xs); color: var(--clr-muted); }
+
+/* ── FIXED: ID column — full display, wraps on mobile ── */
+.row-id {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--clr-purple);
+  padding-left: 8px;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.row-name { font-size: var(--text-sm); color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.row-photo {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(100,130,180,0.25);
+  background: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: transform 0.2s;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.row-photo:hover { transform: scale(1.15); }
+.row-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 20px;
+  padding: 3px clamp(6px, 1.2vw, 10px);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+}
+
+.status-pill.voted   { background: rgba(5,150,105,0.10); color: #059669; border: 1px solid rgba(5,150,105,0.22); }
+.status-pill.pending { background: rgba(217,119,6,0.10); color: #d97706; border: 1px solid rgba(217,119,6,0.22); }
+
+/* ── Voter Log search bar ── */
+.voter-search-wrap {
+  padding: clamp(10px, 2vw, 14px) clamp(10px, 2vw, 16px);
+  border-bottom: 1px solid rgba(100,130,180,0.12);
+}
+
+.voter-search-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.voter-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  pointer-events: none;
+  color: var(--clr-muted);
+}
+
+.voter-search-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-sm);
+  padding: 9px 36px 9px 36px;
+  color: #0f172a;
+  font-size: var(--text-sm);
+  font-family: 'DM Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 40px;
+}
+.voter-search-input:focus {
+  border-color: var(--input-focus-bd);
+  background: var(--input-focus-bg);
+}
+.voter-search-input::placeholder { color: var(--clr-muted); font-family: 'DM Sans', sans-serif; }
+
+.voter-search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--clr-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 4px;
+  line-height: 1;
+  display: none;
+}
+.voter-search-clear.show { display: block; }
+
+/* ── Voter show more ── */
+.voter-show-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: clamp(10px, 2vw, 14px);
+  border-top: 1px solid rgba(100,130,180,0.10);
+}
+
+.btn-voter-show-more {
+  background: rgba(99,102,241,0.07);
+  border: 1px dashed rgba(99,102,241,0.32);
+  border-radius: 8px;
+  padding: 9px 24px;
+  color: var(--clr-purple);
+  font-size: var(--text-sm);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+.btn-voter-show-more:hover {
+  background: rgba(99,102,241,0.13);
+  border-color: var(--clr-purple);
+}
+
+/* no search results */
+.voter-no-results {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--clr-muted);
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-sm);
+  display: none;
+}
+
+/* ═══════════════════════════════════════════
+   PHOTO MODAL
+═══════════════════════════════════════════ */
+.photo-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.photo-modal.show { display: flex; animation: g-fade-in 0.2s ease; }
+@keyframes g-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.photo-modal-inner {
+  background: rgba(255,255,255,0.80);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: clamp(16px, 3vw, 24px);
+  text-align: center;
+  max-width: min(100%, 320px);
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(15,23,42,0.18);
+}
+
+.photo-modal-inner img {
+  width: clamp(140px, 30vw, 200px);
+  height: clamp(140px, 30vw, 200px);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  border: 3px solid rgba(100,130,180,0.25);
+  margin: 0 auto 14px;
+  display: block;
+}
+
+.photo-modal-name { font-family: 'Syne', sans-serif; font-size: clamp(15px, 3vw, 18px); font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.photo-modal-id   { font-family: 'DM Mono', monospace; font-size: var(--text-xs); color: var(--clr-muted); margin-bottom: 16px; }
+
+.btn-modal-close {
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(100,130,180,0.28);
+  color: #334155;
+  border-radius: var(--r-sm);
+  padding: 8px 20px;
+  font-size: var(--text-sm);
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 40px;
+}
+.btn-modal-close:hover { border-color: rgba(220,38,38,0.40); color: var(--clr-red); }
+
+/* ═══════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════ */
+.empty-state { text-align: center; padding: clamp(28px, 5vw, 48px) 24px; color: var(--clr-muted); }
+.empty-state .empty-icon { font-size: clamp(28px, 5vw, 40px); margin-bottom: 12px; }
+.empty-state p { font-size: var(--text-sm); }
+
+/* ═══════════════════════════════════════════
+   PUBLISH SECTION
+═══════════════════════════════════════════ */
+.publish-section {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: clamp(16px, 3vw, 24px);
+  margin-bottom: clamp(20px, 3.5vw, 32px);
+  animation: pub-fadeUp 0.4s ease both;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+}
+
+.publish-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(13px, 2.2vw, 15px);
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.publish-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(10px, 2vw, 16px);
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+}
+
+.publish-field { display: flex; flex-direction: column; gap: 6px; }
+
+.publish-field label {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+}
+
+.publish-field input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-sm);
+  padding: clamp(8px, 1.5vw, 10px) clamp(10px, 2vw, 14px);
+  color: #0f172a;
+  font-size: 16px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+  min-height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: light;
+}
+.publish-field input:focus { border-color: var(--input-focus-bd); background: var(--input-focus-bg); }
+
+/* ═══ RANGES ═══ */
+.ranges-wrap { margin-bottom: clamp(14px, 2.5vw, 20px); }
+
+.ranges-label {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+  margin-bottom: 10px;
+}
+
+/* ── FIXED: range-row — always show both inputs stacked on mobile ── */
+.range-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 36px;
+  gap: 10px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.range-row input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  color: #0f172a;
+  font-size: 14px;
+  font-family: 'DM Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+  min-height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+}
+.range-row input:focus { border-color: var(--input-focus-bd); }
+.range-row input:read-only { opacity: 0.55; cursor: not-allowed; }
+
+.btn-remove-range {
+  width: 36px; height: 36px;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.22);
+  border-radius: var(--r-sm);
+  color: var(--clr-red);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  align-self: center;
+}
+.btn-remove-range:hover { background: rgba(220,38,38,0.16); }
+
+.btn-add-range {
+  background: rgba(99,102,241,0.07);
+  border: 1px dashed rgba(99,102,241,0.32);
+  border-radius: var(--r-sm);
+  padding: 9px 16px;
+  color: var(--clr-purple);
+  font-size: var(--text-sm);
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+  min-height: 44px;
+}
+.btn-add-range:hover { background: rgba(99,102,241,0.14); border-color: var(--clr-purple); }
+
+.publish-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.btn-publish-results {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  border-radius: 10px;
+  padding: clamp(10px, 2vw, 12px) clamp(18px, 3.5vw, 28px);
+  color: #000;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+  min-height: 44px;
+  box-shadow: 0 4px 14px rgba(217,119,6,0.28);
+}
+.btn-publish-results:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(217,119,6,0.38); }
+.btn-publish-results:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.publish-status { font-size: var(--text-sm); color: var(--clr-muted); font-family: 'DM Mono', monospace; }
+.publish-status.published { color: #059669; }
+
+/* ═══ RESULT BLOCK LABELS ═══ */
+/* ── FIXED: label + badge stack properly on mobile ── */
+.result-block-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: #1e293b;
+  letter-spacing: 0.5px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lock-tag {
+  font-size: var(--text-xs);
+  color: #059669;
+  background: rgba(5,150,105,0.08);
+  border: 1px solid rgba(5,150,105,0.22);
+  border-radius: 6px;
+  padding: 2px 8px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.result-block-gap { height: 1px; background: rgba(100,130,180,0.15); margin: clamp(12px, 2.5vw, 16px) 0; }
+
+.lock-icon-box {
+  width: 36px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(5,150,105,0.08);
+  border: 1px solid rgba(5,150,105,0.20);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* ═══ CREDENTIAL ROW ═══ */
+.cred-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 110px 36px;
+  gap: 10px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.cred-cell {
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: #1e293b;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.cred-pill {
+  font-size: var(--text-xs);
+  font-family: 'DM Mono', monospace;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cred-pill.yes { background: rgba(5,150,105,0.10); color: #059669; border: 1px solid rgba(5,150,105,0.22); }
+.cred-pill.no  { background: rgba(220,38,38,0.10); color: var(--clr-red); border: 1px solid rgba(220,38,38,0.22); }
+
+/* ═══════════════════════════════════════════
+   WHO CAN VIEW — TAB SWITCHER
+═══════════════════════════════════════════ */
+.view-tabs {
+  display: flex;
+  gap: 5px;
+  background: rgba(100,130,180,0.08);
+  border: 1px solid rgba(100,130,180,0.15);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.view-tabs::-webkit-scrollbar { display: none; }
+
+.view-tab-btn {
+  flex: 1;
+  min-width: max-content;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: #64748b;
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(0.60rem, 1.8vw, 0.72rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  padding: 0 clamp(8px, 2vw, 14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.view-tab-btn:hover:not(.active) {
+  background: rgba(99,102,241,0.06);
+  color: #6366f1;
+}
+.view-tab-btn.active {
+  background: #ffffff;
+  color: #6366f1;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.10);
+}
+
+.view-tab-panel { display: none; }
+.view-tab-panel.active { display: block; }
+
+/* ═══════════════════════════════════════════
+   DELETE MODALS
+═══════════════════════════════════════════ */
+.del-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.del-modal-overlay.show { display: flex; animation: g-fade-in 0.2s ease; }
+
+.del-modal {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.90);
+  border-radius: 16px;
+  padding: clamp(20px,4vw,32px);
+  max-width: min(100%, 380px);
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(15,23,42,0.18);
+  text-align: center;
+}
+
+.del-modal-icon { font-size: 40px; margin-bottom: 12px; }
+.del-modal-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(15px,3vw,18px);
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+.del-modal-sub {
+  font-size: var(--text-sm);
+  color: #64748b;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.del-modal-session-name {
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.20);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: var(--text-xs);
+  color: #4338ca;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.del-password-input {
+  width: 100%;
+  background: rgba(255,255,255,0.80);
+  border: 1px solid rgba(100,130,180,0.28);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  font-family: 'DM Sans', sans-serif;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+}
+.del-password-input:focus { border-color: rgba(26,86,219,0.45); }
+.del-password-input.error {
+  border-color: #dc2626;
+  animation: del-shake 0.4s ease;
+}
+@keyframes del-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-8px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-5px); }
+  80%     { transform: translateX(5px); }
+}
+
+.del-error-msg {
+  font-size: var(--text-xs);
+  color: #dc2626;
+  margin-bottom: 14px;
+  min-height: 16px;
+  font-family: 'DM Mono', monospace;
+  text-align: left;
+}
+
+.del-modal-actions { display: flex; gap: 10px; }
+
+.btn-del-cancel {
+  flex: 1;
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(100,130,180,0.28);
+  color: #334155;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: var(--text-sm);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 42px;
+}
+.btn-del-cancel:hover { background: rgba(255,255,255,0.95); }
+
+.btn-del-confirm {
+  flex: 1;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: var(--text-sm);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 42px;
+  box-shadow: 0 4px 14px rgba(220,38,38,0.28);
+}
+.btn-del-confirm:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-del-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .main-grid    { grid-template-columns: 1fr; }
+  .stats-row    { grid-template-columns: 1fr 1fr; }
+  .refresh-info { display: none; }
+  .publish-row  { grid-template-columns: 1fr; }
+
+  /* cred row: hide status pill column on narrow */
+  .cred-row     { grid-template-columns: 1fr 1fr 36px; }
+  .cred-row > .cred-cell:nth-child(3) { display: none; }
+
+  /* voter table: widen ID column, hide status */
+  .table-head,
+  .table-row    { grid-template-columns: 36px 1fr 1fr 48px; }
+  .table-head > *:nth-child(5),
+  .table-row  > *:nth-child(5) { display: none; }
+}
+
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .group-selector-grid { grid-template-columns: 1fr; }
+
+  
+  /* range-row on mobile — keep inputs + lock/remove all on one row */
+  .range-row {
+    grid-template-columns: 1fr 1fr 36px;
+    grid-template-rows: auto;
+  }
+  .range-row input:nth-child(1) { grid-column: 1; grid-row: 1; }
+  .range-row input:nth-child(2) { grid-column: 2; grid-row: 1; display: block !important; }
+  .range-row .btn-remove-range,
+  .range-row .lock-icon-box     { grid-column: 3; grid-row: 1; justify-self: center; width: 36px; }
+
+  /* cred row full width stacked */
+  .cred-row { grid-template-columns: 1fr 36px; }
+  .cred-row > .cred-cell:nth-child(2),
+  .cred-row > .cred-cell:nth-child(3) { display: none; }
+
+  /* voter table: show #, ID, Name, Photo — hide only Status */
+  .table-head,
+  .table-row  { grid-template-columns: 26px 1fr 1fr 36px; }
+  .table-head > *:nth-child(5),
+  .table-row  > *:nth-child(5) { display: none; }
+
+  .header-right { gap: 6px; }
+  .header-title { display: none; }
+  /* Edit Session modal — stack Start/End fields on narrow screens */
+  #editSessionModal .del-modal div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  #editSessionModal input[type="datetime-local"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* ── FIXED: Edit/Delete buttons equal width on mobile ── */
+  .session-actions-btns {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .session-actions-btns button {
+    width: 100% !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">📊</div>
+    <div class="header-title">Live Results</div>
+  </div>
+  <div class="header-right">
+    <div class="refresh-info">
+      Auto-refresh in <span class="countdown-num" id="countdown">10</span>s
+    </div>
+    <button class="btn-refresh" id="refreshBtn" onclick="manualRefresh()">
+      <span class="refresh-icon">↻</span> Refresh
+    </button>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <button class="btn-logout" onclick="logoutAdmin()">Logout</button>
+  </div>
+</header>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- GROUP SELECTOR CARDS -->
+  <div class="section-label">Select Voting Session</div>
+  <div class="group-selector-grid" id="groupSelectorGrid">
+    <div class="empty-state" style="padding:32px;grid-column:1/-1">
+      <div class="empty-icon">⏳</div>
+      <p>Loading voting sessions...</p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD (shown after selecting a group) -->
+  <div id="dashContent">
+
+    <!-- INFO STRIP -->
+    <div class="section-label">Session Details</div>
+    <div class="info-strip">
+      <div class="info-group">
+        <div class="info-label">College</div>
+        <div class="info-value" id="infoCollege">—</div>
+      </div>
+      <div class="info-group">
+        <div class="info-label">Year</div>
+        <div class="info-value" id="infoYear">—</div>
+      </div>
+      <div class="info-group">
+        <div class="info-label">Semester</div>
+        <div class="info-value" id="infoSem">—</div>
+      </div>
+      <div class="info-group">
+        <div class="info-label">Section</div>
+        <div class="info-value" id="infoSec">—</div>
+      </div>
+      <div class="info-group">
+        <div class="info-label">Voting Period</div>
+        <div class="info-value" id="infoTime" style="font-size:12px">—</div>
+      </div>
+    </div>
+
+    <!-- PUBLISH RESULTS SECTION -->
+    <div class="section-label">Publish Results</div>
+    <div class="publish-section">
+      <div class="publish-section-title">
+        🏆 Result Display Settings
+      </div>
+      <div class="publish-row">
+        <div class="publish-field">
+          <label>Result Start Date &amp; Time</label>
+          <input type="datetime-local" id="resultStart">
+        </div>
+        <div class="publish-field">
+          <label>Result End Date &amp; Time</label>
+          <input type="datetime-local" id="resultEnd">
+        </div>
+      </div>
+      <div class="ranges-wrap">
+        <div class="ranges-label">Who Can View Results</div>
+
+        <!-- TAB SWITCHER -->
+        <div class="view-tabs">
+          <button class="view-tab-btn active" onclick="switchViewTab('range', this)">
+            📋 Range
+          </button>
+          <button class="view-tab-btn" onclick="switchViewTab('individual', this)">
+            👤 Individual
+          </button>
+          <button class="view-tab-btn" onclick="switchViewTab('exceptional', this)">
+            🔑 Exceptional
+          </button>
+        </div>
+
+        <!-- PANEL 1: Student ID Range -->
+        <div class="view-tab-panel active" id="vpanel-range">
+          <div id="rangeBlockList"></div>
+        </div>
+
+        <!-- PANEL 2: Individual Student IDs -->
+        <div class="view-tab-panel" id="vpanel-individual">
+          <div id="individualBlockList"></div>
+        </div>
+
+        <!-- PANEL 3: Exceptional Students ID -->
+        <div class="view-tab-panel" id="vpanel-exceptional">
+          <div id="exceptionalBlockList"></div>
+        </div>
+
+        <button class="btn-add-range" id="addRangeBtn" onclick="addResultRange()">
+          ＋ &nbsp;Add Extra Range
+        </button>
+      </div>
+      <div class="publish-actions">
+        <button class="btn-publish-results" id="publishBtn" onclick="publishResults()">
+          🏆 &nbsp;Publish Results
+        </button>
+        <div class="publish-status" id="publishStatus">Not published yet</div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="section-label">Overview</div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">🗳️</div>
+        <div class="stat-num" id="statTotal">0</div>
+        <div class="stat-label">Total Votes Cast</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num" id="statVerified">0</div>
+        <div class="stat-label">Verified Voters</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-num" id="statPct">0%</div>
+        <div class="stat-label">Turnout Rate</div>
+      </div>
+    </div>
+
+    <!-- CHART + LEADERBOARD -->
+    <div class="section-label">Results</div>
+    <div class="main-grid">
+      <div class="dash-card">
+        <div class="card-head">
+          <div class="card-title">Vote Distribution</div>
+          <div class="card-badge" id="totalVotesBadge">0 votes</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <canvas id="pieChart" height="260"></canvas>
+            <div class="chart-center">
+              <div class="chart-center-num" id="chartTotal">0</div>
+              <div class="chart-center-label">votes</div>
+            </div>
+          </div>
+          <div class="legend" id="chartLegend"></div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="card-head">
+          <div class="card-title">Candidate Standings</div>
+          <div class="card-badge">Ranked</div>
+        </div>
+        <div class="card-body">
+          <div class="leaderboard" id="leaderboard">
+            <div class="empty-state">
+              <div class="empty-icon">🏆</div>
+              <p>No votes yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOTER TABLE -->
+    <div class="section-label">Verified Voters</div>
+    <div class="dash-card">
+      <div class="card-head">
+        <div class="card-title">Voter Log</div>
+        <div class="card-badge" id="voterCountBadge">0 voters</div>
+      </div>
+
+      <!-- Search bar -->
+      <div class="voter-search-wrap">
+        <div class="voter-search-inner">
+          <span class="voter-search-icon">🔍</span>
+          <input
+            type="text"
+            class="voter-search-input"
+            id="voterSearchInput"
+            placeholder="Search by ID or name…"
+            autocomplete="off"
+            oninput="onVoterSearch(this.value)"
+          >
+          <button class="voter-search-clear" id="voterSearchClear" onclick="clearVoterSearch()">✕</button>
+        </div>
+      </div>
+
+      <div class="table-head">
+        <div>#</div>
+        <div style="padding-left:8px">ID</div>
+        <div>Name</div>
+        <div>Photo</div>
+        <div>Status</div>
+      </div>
+      <div class="table-body" id="voterTableBody">
+        <div class="empty-state">
+          <div class="empty-icon">👤</div>
+          <p>No verified voters yet</p>
+        </div>
+      </div>
+      <div class="voter-no-results" id="voterNoResults">
+        No voters match your search.
+      </div>
+      <!-- Show More voters button (inserted by JS) -->
+      <div id="voterShowMoreWrap"></div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="section-label" style="margin-top:clamp(20px,3.5vw,32px)">****</div>
+    <div style="
+      background:rgba(220,38,38,0.05);
+      border:1px solid rgba(220,38,38,0.20);
+      border-radius:16px;
+      padding:clamp(16px,3vw,24px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:16px;
+      box-shadow:0 4px 16px rgba(220,38,38,0.06);
+      margin-bottom:clamp(20px,3.5vw,32px);
+    ">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:clamp(13px,2.2vw,15px);font-weight:700;color:#0f172a;margin-bottom:4px;">
+          ⚙️ Session Actions
+        </div>
+        <div style="font-size:var(--text-xs);color:#64748b;font-family:'DM Mono',monospace;">
+          Edit the voting or result window — or permanently delete this session and all its data.
+        </div>
+      </div>
+      <div class="session-actions-btns" style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button
+          id="dangerEditBtn"
+          style="
+            background:linear-gradient(135deg,#6366f1,#818cf8);
+            border:none;
+            color:#fff;
+            border-radius:10px;
+            padding:10px 22px;
+            font-family:'Syne',sans-serif;
+            font-size:var(--text-sm);
+            font-weight:700;
+            cursor:pointer;
+            box-shadow:0 4px 14px rgba(99,102,241,0.28);
+            white-space:nowrap;
+            min-height:44px;
+            transition:all 0.2s;
+          "
+          onmouseover="this.style.filter='brightness(1.08)';this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.filter='';this.style.transform=''"
+        >
+          ✏️ &nbsp;Edit Session
+        </button>
+        <button
+          id="dangerDeleteBtn"
+          style="
+            background:linear-gradient(135deg,#dc2626,#b91c1c);
+            border:none;
+            color:#fff;
+            border-radius:10px;
+            padding:10px 22px;
+            font-family:'Syne',sans-serif;
+            font-size:var(--text-sm);
+            font-weight:700;
+            cursor:pointer;
+            box-shadow:0 4px 14px rgba(220,38,38,0.28);
+            white-space:nowrap;
+            min-height:44px;
+            transition:all 0.2s;
+          "
+          onmouseover="this.style.filter='brightness(1.08)';this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.filter='';this.style.transform=''"
+        >
+          🗑 &nbsp;Delete Session
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- PHOTO MODAL -->
+<div class="photo-modal" id="photoModal">
+  <div class="photo-modal-inner">
+    <img id="modalPhoto" src="" alt="">
+    <div class="photo-modal-name" id="modalName">—</div>
+    <div class="photo-modal-id"  id="modalId">—</div>
+    <button class="btn-modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script type="module">
+const API   = 'https://qr-authenticated-voting-system.onrender.com'
+const TOKEN = () => sessionStorage.getItem('access_token')
+const AUTH  = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN()}` })
+const bust  = (url) => `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`
+const fetchFresh = (url, opts = {}) => fetch(bust(url), { cache: 'no-store', ...opts })
+
+/* ── AUTH CHECK ── */
+const sessionRes = await fetchFresh(`${API}/api/auth/session`, { headers: AUTH() })
+if (!sessionRes.ok) {
+  document.body.innerHTML = `
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;background:#f0f2f7 url('bgg.png?v=2') center/cover;font-family:'DM Sans',sans-serif;
+    color:#0f172a;text-align:center;padding:24px;">
+      <div style="font-size:56px;margin-bottom:20px">🔒</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:10px">
+        Session Closed
+      </h2>
+      <p style="color:#64748b;font-size:15px;margin-bottom:32px;">
+        Please log back in.
+      </p>
+      <a href="index.html" style="background:linear-gradient(135deg,#6366f1,#818cf8);
+      color:white;text-decoration:none;border-radius:10px;padding:12px 28px;
+      font-size:14px;font-weight:700;">Re-login as Admin</a>
+    </div>`
+  throw new Error('No session')
+}
+const { adminId: ADMIN_ID } = await sessionRes.json()
+
+/* ── STATE ── */
+let GROUP_ID       = null
+let pieChart       = null
+let countdownVal   = 10
+let countdownTimer = null
+const COLORS = ['#6366f1','#f43f5e','#22d3a5','#f59e0b','#a78bfa','#fb7185','#34d399','#fbbf24']
+
+/* ── Voter log state ── */
+let _allVoters          = []   // full list
+let _voterShownCount    = 4    // how many rows visible (pagination)
+const VOTER_PAGE_SIZE   = 4
+
+/* ── Session grid pagination ── */
+const GS_PAGE_SIZE      = 4
+let   _gsShownCount     = GS_PAGE_SIZE
+let   _allGroupCards    = []   // array of { id, html } in original order
+
+/* ── INIT ── */
+init()
+
+async function init() {
+  const res = await fetchFresh(`${API}/api/sessions`, { headers: AUTH() })
+  const { groups } = await res.json()
+
+  const grid = document.getElementById('groupSelectorGrid')
+
+  if (!groups || groups.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;padding:48px">
+        <div class="empty-icon">⚠️</div>
+        <p style="font-size:15px">No voting sessions found.<br>
+        <a href="admin.html" style="color:#6366f1">Go to Admin Panel</a> to create one.</p>
+      </div>`
+    return
+  }
+
+  const now = new Date()
+
+  _allGroupCards = groups.map(g => {
+    const start    = new Date(g.voting_start + 'Z')
+    const end      = new Date(g.voting_end + 'Z')
+
+    const dateOpts = { day: 'numeric', month: 'short', year: 'numeric' }
+    const timeOpts = { hour: '2-digit', minute: '2-digit', hour12: true }
+    const startDateStr = start.toLocaleDateString('en-IN', dateOpts)
+    const endDateStr   = end.toLocaleDateString('en-IN', dateOpts)
+    const startT       = start.toLocaleTimeString('en-IN', timeOpts)
+    const endT         = end.toLocaleTimeString('en-IN', timeOpts)
+
+    let statusClass = 'ended',   statusText = '● Ended'
+    if (now < start)             { statusClass = 'upcoming'; statusText = '◎ Upcoming' }
+    if (now >= start && now <= end) { statusClass = 'active'; statusText = '● Active' }
+
+    return {
+      id: g.id,
+      html: `
+        <div class="group-card gs-hidden" id="gc-${g.id}" onclick="selectGroup('${g.id}')">
+          <div class="group-card-tick">✓</div>
+          <div class="group-card-top">
+            <div class="group-college">${g.college}</div>
+            <div class="group-sec">Sec ${g.section}</div>
+          </div>
+          <div class="group-date">📅 ${startDateStr} &nbsp;→&nbsp; ${endDateStr}</div>
+          <div class="group-time">🕐 ${startT} &nbsp;→&nbsp; ${endT}</div>
+          <div class="group-status ${statusClass}">
+            <div class="status-dot"></div>${statusText}
+          </div>
+        </div>`
+    }
+  })
+
+  // render all card HTML into grid (hidden by default)
+  grid.innerHTML = _allGroupCards.map(c => c.html).join('')
+
+  // add show more button placeholder
+  grid.insertAdjacentHTML('beforeend', `
+    <div class="gs-show-more-wrap" id="gsShowMoreWrap" style="display:none">
+      <button class="btn-gs-show-more" id="gsShowMoreBtn" onclick="showMoreSessions()">
+        ▼ &nbsp;Show More Sessions
+      </button>
+    </div>
+  `)
+
+  // reveal first page
+  _gsShownCount = 0
+  showMoreSessions()
+
+  await selectGroup(groups[0].id)
+}
+
+/* ── SESSION PAGINATION ── */
+window.showMoreSessions = function() {
+  const newCount = Math.min(_gsShownCount + GS_PAGE_SIZE, _allGroupCards.length)
+  for (let i = _gsShownCount; i < newCount; i++) {
+    const card = document.getElementById('gc-' + _allGroupCards[i].id)
+    if (card) card.classList.remove('gs-hidden')
+  }
+  _gsShownCount = newCount
+
+  const wrap = document.getElementById('gsShowMoreWrap')
+  if (_gsShownCount >= _allGroupCards.length) {
+    wrap.style.display = 'none'
+  } else {
+    wrap.style.display = 'flex'
+    const remaining = _allGroupCards.length - _gsShownCount
+    document.getElementById('gsShowMoreBtn').textContent =
+      `▼  Show ${Math.min(GS_PAGE_SIZE, remaining)} More Session${remaining === 1 ? '' : 's'}`
+  }
+}
+
+/* ── SELECT GROUP ── */
+async function selectGroup(groupId) {
+  document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'))
+  document.getElementById('gc-' + groupId)?.classList.add('selected')
+
+  GROUP_ID = groupId
+
+  const groupRes = await fetchFresh(`${API}/api/results/${groupId}/publish-settings`, { headers: AUTH() })
+  const settings = await groupRes.json()
+  const group    = settings.group
+
+  if (!group) return
+
+  document.getElementById('infoCollege').textContent = group.college.toUpperCase()
+  document.getElementById('infoYear').textContent    = group.year
+  document.getElementById('infoSem').textContent     = 'Sem ' + group.semester
+  document.getElementById('infoSec').textContent     = 'Sec ' + group.section
+
+  const fmtDT = dt => dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+              + ', ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+  const startDT = new Date(group.voting_start + 'Z')
+  const endDT   = new Date(group.voting_end + 'Z')
+  document.getElementById('infoTime').textContent = fmtDT(startDT) + '  →  ' + fmtDT(endDT)
+
+  if (pieChart) { pieChart.destroy(); pieChart = null }
+  document.getElementById('resultStart').value = ''
+  document.getElementById('resultEnd').value   = ''
+  document.getElementById('publishStatus').textContent = 'Not published yet'
+  document.getElementById('publishStatus').className   = 'publish-status'
+  document.querySelectorAll('.extra-range').forEach(el => el.remove())
+
+  // reset voter search & pagination
+  document.getElementById('voterSearchInput').value = ''
+  document.getElementById('voterSearchClear').classList.remove('show')
+  _voterShownCount = VOTER_PAGE_SIZE
+  _allVoters = []
+
+  const dash = document.getElementById('dashContent')
+  dash.classList.remove('show')
+  void dash.offsetWidth
+  dash.classList.add('show')
+
+  await loadAll()
+  await loadPublishSettings(group)
+  startCountdown()
+
+  const dangerBtn = document.getElementById('dangerDeleteBtn')
+  if (dangerBtn) {
+    dangerBtn.onclick = () => openDeletePassword(
+      GROUP_ID,
+      group.college,
+      group.section,
+      group.semester
+    )
+  }
+  const dangerEditBtn = document.getElementById('dangerEditBtn')
+  if (dangerEditBtn) {
+    dangerEditBtn.onclick = async () => {
+      const r = await fetchFresh(`${API}/api/results/${GROUP_ID}/publish-settings`, { headers: AUTH() })
+      const d = await r.json()
+      if (d.group) openEditModal(d.group)
+    }
+  }
+}
+window.selectGroup = selectGroup
+
+/* ── LOAD PUBLISH SETTINGS ── */
+async function loadPublishSettings(group) {
+  const settingsRes = await fetchFresh(`${API}/api/results/${GROUP_ID}/publish-settings`, { headers: AUTH() })
+  const settings    = await settingsRes.json()
+  const freshGroup  = settings.group || group
+
+  if (freshGroup.result_start) {
+    const dt = new Date(freshGroup.result_start + 'Z')
+    document.getElementById('resultStart').value = toLocalDatetimeInput(dt)
+  }
+  if (freshGroup.result_end) {
+    const dt = new Date(freshGroup.result_end + 'Z')
+    document.getElementById('resultEnd').value = toLocalDatetimeInput(dt)
+  }
+
+  const statusEl = document.getElementById('publishStatus')
+  if (freshGroup.is_published) {
+    statusEl.textContent = '✅ Results published'
+    statusEl.className   = 'publish-status published'
+  } else {
+    statusEl.textContent = 'Not published yet'
+    statusEl.className   = 'publish-status'
+  }
+
+  const uucmsRanges        = settings.uucmsRanges
+  const studentCreds       = settings.studentCreds
+  const individualStudents = settings.individualStudents
+  const resultRanges       = settings.resultRanges
+
+  // ── PANEL 1: Student ID Range
+  const rangeBlock = document.getElementById('rangeBlockList')
+  rangeBlock.innerHTML = ''
+  if (uucmsRanges && uucmsRanges.length > 0) {
+    rangeBlock.innerHTML += `
+      <div class="result-block-label">
+        <span>📋 Student ID Ranges</span>
+        <span class="lock-tag">🔒 Auto-filled</span>
+      </div>`
+    uucmsRanges.forEach(r => {
+      rangeBlock.innerHTML += `
+        <div class="range-row">
+          <input type="text" value="${r.range_from}" readonly placeholder="From">
+          <input type="text" value="${r.range_to}"   readonly placeholder="To">
+          <div class="lock-icon-box">🔒</div>
+        </div>`
+    })
+  } else {
+    rangeBlock.innerHTML = `<div class="empty-state" style="padding:24px"><div class="empty-icon">📋</div><p>No ID ranges added</p></div>`
+  }
+
+  // ── PANEL 2: Individual Student IDs
+  const individualBlock = document.getElementById('individualBlockList')
+  individualBlock.innerHTML = ''
+  if (individualStudents && individualStudents.length > 0) {
+    individualBlock.innerHTML += `
+      <div class="result-block-label">
+        <span>👤 Individual Student IDs</span>
+        <span class="lock-tag">🔒 Auto-filled</span>
+      </div>`
+    individualStudents.forEach(s => {
+      individualBlock.innerHTML += `
+        <div class="range-row">
+          <input type="text" value="${s.student_id}"          readonly placeholder="Student ID">
+          <input type="text" value="${s.student_name || '—'}" readonly placeholder="Name">
+          <div class="lock-icon-box">🔒</div>
+        </div>`
+    })
+  } else {
+    individualBlock.innerHTML = `<div class="empty-state" style="padding:24px"><div class="empty-icon">👤</div><p>No individual students added</p></div>`
+  }
+
+  // ── PANEL 3: Exceptional Students
+  const exceptionalBlock = document.getElementById('exceptionalBlockList')
+  exceptionalBlock.innerHTML = ''
+  if (studentCreds && studentCreds.length > 0) {
+    exceptionalBlock.innerHTML += `
+      <div class="result-block-label">
+        <span>🔑 Exceptional Students</span>
+        <span class="lock-tag">🔒 Auto-filled</span>
+      </div>`
+    studentCreds.forEach(s => {
+      const canVote = s.can_vote
+        ? `<span class="cred-pill yes">✅ Can Vote</span>`
+        : `<span class="cred-pill no">❌ No Vote</span>`
+      exceptionalBlock.innerHTML += `
+        <div class="cred-row">
+          <div class="cred-cell id">${s.student_id || '—'}</div>
+          <div class="cred-cell name">${s.student_name || '—'}</div>
+          <div class="cred-cell">${canVote}</div>
+          <div class="lock-icon-box">🔒</div>
+        </div>`
+    })
+  } else {
+    exceptionalBlock.innerHTML = `<div class="empty-state" style="padding:24px"><div class="empty-icon">🔑</div><p>No exceptional students added</p></div>`
+  }
+
+  // ── Extra result ranges (editable)
+  document.querySelectorAll('.extra-range').forEach(el => el.remove())
+  if (resultRanges) {
+    resultRanges.forEach(r => { addResultRangeRow(r.range_from, r.range_to) })
+  }
+}
+
+/* ── SWITCH VIEW TAB ── */
+window.switchViewTab = function(tab, btn) {
+  document.querySelectorAll('.view-tab-panel').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.view-tab-btn').forEach(b => b.classList.remove('active'))
+  document.getElementById('vpanel-' + tab).classList.add('active')
+  btn.classList.add('active')
+  const addBtn = document.getElementById('addRangeBtn')
+  if (addBtn) addBtn.style.display = tab === 'range' ? 'flex' : 'none'
+}
+
+/* ── DATETIME HELPER ── */
+function toLocalDatetimeInput(date) {
+  const pad = n => String(n).padStart(2, '0')
+  return date.getFullYear() + '-' +
+    pad(date.getMonth() + 1) + '-' +
+    pad(date.getDate()) + 'T' +
+    pad(date.getHours()) + ':' +
+    pad(date.getMinutes())
+}
+
+/* ── ADD RESULT RANGE ROW ── */
+function addResultRangeRow(from = '', to = '') {
+  const list = document.getElementById('rangeBlockList')
+  const row  = document.createElement('div')
+  row.className = 'range-row extra-range'
+  row.innerHTML = `
+    <input type="text" placeholder="From (e.g. sdc0051)" value="${from}">
+    <input type="text" placeholder="To (e.g. sdc0100)"   value="${to}">
+    <button class="btn-remove-range" onclick="this.parentElement.remove()">✕</button>
+  `
+  list.appendChild(row)
+}
+
+window.addResultRange = function() { addResultRangeRow() }
+
+/* ── PUBLISH RESULTS ── */
+let _publishConflictBlocked = false
+
+function showPublishConflictBanner(msg) {
+  let banner = document.getElementById('publishConflictBanner')
+  if (!banner) {
+    banner = document.createElement('div')
+    banner.id = 'publishConflictBanner'
+    banner.style.cssText = `
+      display:flex;align-items:flex-start;gap:10px;
+      background:rgba(220,38,38,0.07);
+      border:1px solid rgba(220,38,38,0.30);
+      border-radius:12px;
+      padding:12px 16px;
+      margin-bottom:16px;
+      font-size:0.875rem;
+      color:#b91c1c;
+      font-weight:500;
+      font-family:'DM Sans',sans-serif;
+      line-height:1.5;
+    `
+    const publishSection = document.querySelector('.publish-section')
+    publishSection.insertBefore(banner, publishSection.firstChild)
+  }
+  banner.innerHTML = `
+    <span style="font-size:16px;flex-shrink:0;margin-top:1px;">⚠️</span>
+    <span>${msg}</span>
+  `
+  banner.style.display = 'flex'
+}
+
+function hidePublishConflictBanner() {
+  const banner = document.getElementById('publishConflictBanner')
+  if (banner) banner.style.display = 'none'
+}
+
+function watchPublishChanges() {
+  const handler = () => {
+    if (_publishConflictBlocked) {
+      _publishConflictBlocked = false
+      hidePublishConflictBanner()
+      const btn = document.getElementById('publishBtn')
+      btn.disabled    = false
+      btn.textContent = '🏆 Publish Results'
+    }
+  }
+  document.getElementById('resultStart').addEventListener('change', handler)
+  document.getElementById('resultEnd').addEventListener('change', handler)
+  document.querySelector('.ranges-wrap').addEventListener('input', e => {
+    if (e.target.closest('.extra-range')) handler()
+  })
+  document.querySelector('.ranges-wrap').addEventListener('click', e => {
+    if (e.target.closest('.btn-remove-range')) { setTimeout(handler, 50) }
+  })
+}
+
+watchPublishChanges()
+
+window.publishResults = async function() {
+  const btn = document.getElementById('publishBtn')
+  const resultStart = document.getElementById('resultStart').value
+  const resultEnd   = document.getElementById('resultEnd').value
+
+  if (!resultStart || !resultEnd) {
+    alert('❌ Please set result start and end date/time!')
+    return
+  }
+  if (new Date(resultStart) >= new Date(resultEnd)) {
+    alert('❌ Result end time must be after start time!')
+    return
+  }
+
+  const extraRangesForCheck = []
+  document.querySelectorAll('.extra-range').forEach(row => {
+    const inputs = row.querySelectorAll('input')
+    const from   = inputs[0]?.value.trim()
+    const to     = inputs[1]?.value.trim()
+    if (from && to) extraRangesForCheck.push({ rangeFrom: from, rangeTo: to })
+  })
+
+  btn.disabled    = true
+  btn.textContent = '⏳ Checking conflicts…'
+
+  try {
+    const conflictRes  = await fetch(`${API}/api/sessions/${GROUP_ID}/check-publish-conflicts`, {
+      method: 'POST',
+      headers: AUTH(),
+      body: JSON.stringify({
+        resultStart: new Date(resultStart).toISOString(),
+        resultEnd:   new Date(resultEnd).toISOString(),
+        extraRanges: extraRangesForCheck
+      })
+    })
+    const conflictData = await conflictRes.json()
+    if (conflictData.conflict) {
+      _publishConflictBlocked = true
+      showPublishConflictBanner(conflictData.message)
+      btn.disabled    = true
+      btn.textContent = '🏆 Publish Results'
+      return
+    }
+  } catch (err) {
+    await Notify.alert('Could not check conflicts. Please try again.', 'error')
+    btn.disabled    = false
+    btn.textContent = '🏆 Publish Results'
+    return
+  }
+
+  btn.disabled    = true
+  btn.textContent = '⏳ Publishing...'
+
+  try {
+    const extraRanges = []
+    document.querySelectorAll('.extra-range').forEach(row => {
+      const inputs = row.querySelectorAll('input')
+      const from   = inputs[0].value.trim()
+      const to     = inputs[1].value.trim()
+      if (from && to) extraRanges.push({ rangeFrom: from, rangeTo: to })
+    })
+
+    const res  = await fetch(`${API}/api/sessions/${GROUP_ID}/publish`, {
+      method: 'POST',
+      headers: AUTH(),
+      body: JSON.stringify({
+        resultStart: new Date(resultStart).toISOString(),
+        resultEnd:   new Date(resultEnd).toISOString(),
+        extraRanges
+      })
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      btn.disabled    = false
+      btn.textContent = '🏆 Publish Results'
+      await Notify.alert(data.error, 'error')
+      return
+    }
+
+    const statusEl = document.getElementById('publishStatus')
+    statusEl.textContent = '✅ Results published!'
+    statusEl.className   = 'publish-status published'
+    btn.textContent = '🏆 Publish Results'
+    btn.disabled    = false
+
+    await Notify.alert('✅ Results published successfully!\nStudents can now view results by scanning QR.', 'success')
+
+    const freshRes  = await fetchFresh(`${API}/api/results/${GROUP_ID}/publish-settings`, { headers: AUTH() })
+    const freshData = await freshRes.json()
+    if (freshData.group?.result_start) {
+      document.getElementById('resultStart').value = toLocalDatetimeInput(new Date(freshData.group.result_start + 'Z'))
+    }
+    if (freshData.group?.result_end) {
+      document.getElementById('resultEnd').value = toLocalDatetimeInput(new Date(freshData.group.result_end + 'Z'))
+    }
+  } catch (err) {
+    console.error('Publish error:', err)
+    await Notify.alert('Error publishing: ' + err.message, 'error')
+    btn.textContent = '🏆 Publish Results'
+    btn.disabled    = false
+  }
+}
+
+/* ── LOAD ALL ── */
+async function loadAll() {
+  await Promise.all([loadResults(), loadVoters()])
+}
+
+/* ── LOAD RESULTS ── */
+async function loadResults() {
+  const res = await fetchFresh(`${API}/api/candidates?group=${GROUP_ID}`)
+  const { candidates } = await res.json()
+
+  if (!candidates || candidates.length === 0) return
+
+  const totalVotes = candidates.reduce((sum, c) => sum + (c.vote_count || 0), 0)
+
+  document.getElementById('totalVotesBadge').textContent = totalVotes + ' votes'
+  document.getElementById('chartTotal').textContent      = totalVotes
+  document.getElementById('statTotal').textContent       = totalVotes
+
+  updatePieChart(candidates, totalVotes)
+  updateLeaderboard(candidates, totalVotes)
+}
+
+/* ── PIE CHART ── */
+function updatePieChart(candidates, total) {
+  candidates = [...candidates].sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
+  const labels = candidates.map(c => c.name)
+  const data   = candidates.map(c => c.vote_count || 0)
+  const colors = candidates.map((_, i) => COLORS[i % COLORS.length])
+
+  if (pieChart) {
+    pieChart.data.labels                      = labels
+    pieChart.data.datasets[0].data            = data
+    pieChart.data.datasets[0].backgroundColor = colors
+    pieChart.update('active')
+  } else {
+    const ctx = document.getElementById('pieChart').getContext('2d')
+    pieChart  = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor:  colors,
+          borderColor:      'rgba(255,255,255,0.70)',
+          borderWidth:      3,
+          hoverBorderWidth: 3,
+          hoverOffset:      8
+        }]
+      },
+      options: {
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const pct = total > 0 ? Math.round(ctx.parsed / total * 100) : 0
+                return `  ${ctx.label}: ${ctx.parsed} votes (${pct}%)`
+              }
+            },
+            backgroundColor: 'rgba(255,255,255,0.92)',
+            titleColor:      '#0f172a',
+            bodyColor:       '#475569',
+            borderColor:     'rgba(100,130,180,0.28)',
+            borderWidth:     1,
+            padding:         10,
+            cornerRadius:    8
+          }
+        },
+        animation: { duration: 600, easing: 'easeInOutQuart' }
+      }
+    })
+  }
+
+  document.getElementById('chartLegend').innerHTML = candidates.map((c, i) => {
+    const votes = c.vote_count || 0
+    const pct   = total > 0 ? Math.round(votes / total * 100) : 0
+    return `
+      <div class="legend-item">
+        <div class="legend-left">
+          <div class="legend-dot" style="background:${COLORS[i % COLORS.length]}"></div>
+          <div class="legend-name">${c.name}</div>
+        </div>
+        <div class="legend-right">
+          <div class="legend-count">${votes}</div>
+          <div class="legend-pct">${pct}%</div>
+        </div>
+      </div>`
+  }).join('')
+}
+
+/* ── LEADERBOARD ── */
+function updateLeaderboard(candidates, total) {
+  const board  = document.getElementById('leaderboard')
+  const medals = ['🥇', '🥈', '🥉']
+  candidates = [...candidates].sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
+
+  if (total === 0) {
+    board.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><p>No votes yet</p></div>`
+    return
+  }
+
+  board.innerHTML = candidates.map((c, i) => {
+    const votes = c.vote_count || 0
+    const pct   = total > 0 ? Math.round(votes / total * 100) : 0
+    const color = COLORS[i % COLORS.length]
+    const isTop = i === 0 && votes > 0
+
+    const photoHTML = c.photo_url
+      ? `<div class="leader-photo"><img src="${c.photo_url}" alt="${c.name}"></div>`
+      : `<div class="leader-photo">👤</div>`
+
+    return `
+      <div class="leader-item ${isTop ? 'top' : ''}">
+        <div class="leader-rank">${medals[i] || (i + 1)}</div>
+        ${photoHTML}
+        <div class="leader-info">
+          <div class="leader-name">${c.name}</div>
+          <div class="leader-bar-wrap">
+            <div class="leader-bar" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>
+        <div class="leader-votes">${votes}</div>
+      </div>`
+  }).join('')
+}
+
+/* ── LOAD VOTERS ── */
+async function loadVoters() {
+  const res = await fetchFresh(`${API}/api/voters/list?group=${GROUP_ID}`, { headers: AUTH() })
+  const { voters } = await res.json()
+
+  if (!voters) return
+
+  const total = voters.length
+  const voted = voters.filter(v => v.has_voted).length
+  const pct   = total > 0 ? Math.round(voted / total * 100) : 0
+
+  document.getElementById('statVerified').textContent    = total
+  document.getElementById('statPct').textContent         = pct + '%'
+  document.getElementById('voterCountBadge').textContent = total + ' voters'
+
+  _allVoters       = voters
+  _voterShownCount = VOTER_PAGE_SIZE
+
+  renderVoterTable(_allVoters, '')
+}
+
+function proxyUrl(url) {
+  if (!url) return null
+  const match = url.match(/\/storage\/v1\/object\/(?:sign|public)\/voting-images\/(.+?)(\?|$)/)
+  if (!match) return url
+  return `${API}/api/image/${match[1]}`
+}
+
+/* ── RENDER VOTER TABLE (with search + pagination) ── */
+function renderVoterTable(voters, searchQuery) {
+  const tbody      = document.getElementById('voterTableBody')
+  const noResults  = document.getElementById('voterNoResults')
+  const showMoreWrap = document.getElementById('voterShowMoreWrap')
+
+  if (voters.length === 0 && !searchQuery) {
+    tbody.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><p>No verified voters yet</p></div>`
+    noResults.style.display   = 'none'
+    showMoreWrap.innerHTML    = ''
+    return
+  }
+
+  // filter by search
+  const q = searchQuery.trim().toLowerCase()
+  const filtered = q
+    ? voters.filter(v =>
+        (v.student_id   || '').toLowerCase().includes(q) ||
+        (v.student_name || '').toLowerCase().includes(q)
+      )
+    : voters
+
+  noResults.style.display = (filtered.length === 0 && q) ? 'block' : 'none'
+
+  // show up to _voterShownCount
+  const toShow = filtered.slice(0, _voterShownCount)
+
+  if (toShow.length === 0 && !q) {
+    tbody.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><p>No verified voters yet</p></div>`
+    showMoreWrap.innerHTML = ''
+    return
+  }
+
+  tbody.innerHTML = toShow.map((v, i) => {
+    const proxied   = proxyUrl(v.face_image_url)
+    const photoHTML = proxied
+      ? `<div class="row-photo" onclick="openModal('${proxied}','${v.student_name}','${v.student_id}')">
+           <img src="${proxied}" alt="${v.student_name}">
+         </div>`
+      : `<div class="row-photo">👤</div>`
+
+    const statusHTML = v.has_voted
+      ? `<div class="status-pill voted">✓ Voted</div>`
+      : `<div class="status-pill pending">⏳ Pending</div>`
+
+    return `
+      <div class="table-row">
+        <div class="row-num">${i + 1}</div>
+        <div class="row-id">${v.student_id}</div>
+        <div class="row-name">${v.student_name || '—'}</div>
+        ${photoHTML}
+        ${statusHTML}
+      </div>`
+  }).join('')
+
+  // show more button
+  const remaining = filtered.length - _voterShownCount
+  if (remaining > 0 && !q) {
+    showMoreWrap.innerHTML = `
+      <div class="voter-show-more-wrap">
+        <button class="btn-voter-show-more" onclick="showMoreVoters()">
+          ▼ &nbsp;Show ${Math.min(VOTER_PAGE_SIZE, remaining)} More Voter${remaining === 1 ? '' : 's'}
+        </button>
+      </div>`
+  } else {
+    showMoreWrap.innerHTML = ''
+  }
+}
+
+/* ── SHOW MORE VOTERS ── */
+window.showMoreVoters = function() {
+  _voterShownCount += VOTER_PAGE_SIZE
+  const q = document.getElementById('voterSearchInput').value
+  renderVoterTable(_allVoters, q)
+}
+
+/* ── VOTER SEARCH ── */
+window.onVoterSearch = function(value) {
+  const clearBtn = document.getElementById('voterSearchClear')
+  clearBtn.classList.toggle('show', value.length > 0)
+  // when searching, show all matches (no pagination limit)
+  _voterShownCount = value ? _allVoters.length : VOTER_PAGE_SIZE
+  renderVoterTable(_allVoters, value)
+}
+
+window.clearVoterSearch = function() {
+  const input = document.getElementById('voterSearchInput')
+  input.value = ''
+  document.getElementById('voterSearchClear').classList.remove('show')
+  _voterShownCount = VOTER_PAGE_SIZE
+  renderVoterTable(_allVoters, '')
+  input.focus()
+}
+
+/* ── PHOTO MODAL ── */
+window.openModal = function(src, name, id) {
+  document.getElementById('modalPhoto').src        = src
+  document.getElementById('modalName').textContent = name || '—'
+  document.getElementById('modalId').textContent   = 'ID: ' + (id || '—')
+  document.getElementById('photoModal').classList.add('show')
+}
+
+window.closeModal = function() {
+  document.getElementById('photoModal').classList.remove('show')
+}
+
+/* ── AUTO REFRESH ── */
+function startCountdown() {
+  countdownVal = 10
+  document.getElementById('countdown').textContent = countdownVal
+  clearInterval(countdownTimer)
+
+  countdownTimer = setInterval(async () => {
+    countdownVal--
+    document.getElementById('countdown').textContent = countdownVal
+    if (countdownVal <= 0) {
+      await loadAll()
+      countdownVal = 10
+    }
+  }, 1000)
+}
+
+/* ── MANUAL REFRESH ── */
+window.manualRefresh = async function() {
+  if (!GROUP_ID) return
+  const btn = document.getElementById('refreshBtn')
+  btn.classList.add('spinning')
+  await loadAll()
+  setTimeout(() => btn.classList.remove('spinning'), 600)
+  startCountdown()
+}
+
+/* ── LOGOUT ── */
+window.logoutAdmin = async function() {
+  const ok = await Notify.confirm('Are you sure you want to logout?', { icon: '🔓', yesLabel: 'Logout', type: 'danger' })
+  if (ok) {
+    sessionStorage.removeItem('access_token')
+    window.location.href = 'index.html'
+  }
+}
+
+/* ── CLOSE MODAL OUTSIDE CLICK ── */
+document.getElementById('photoModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal()
+})
+
+/* ── DELETE SESSION FLOW ── */
+let _delGroupId   = null
+let _delGroupName = null
+let _delVerified  = false
+
+window.openDeletePassword = function(groupId, college, section, semester) {
+  _delGroupId   = groupId
+  _delGroupName = `${college.toUpperCase()} — Sec ${section} — Sem ${semester}`
+  _delVerified  = false
+
+  document.getElementById('delSessionNamePw').textContent    = _delGroupName
+  document.getElementById('delPasswordInput').value          = ''
+  document.getElementById('delPasswordInput').classList.remove('error')
+  document.getElementById('delPasswordError').textContent    = ''
+  document.getElementById('delPasswordSubmitBtn').disabled   = false
+  document.getElementById('delPasswordModal').classList.add('show')
+  setTimeout(() => document.getElementById('delPasswordInput').focus(), 100)
+}
+
+window.submitDeletePassword = async function() {
+  const password = document.getElementById('delPasswordInput').value
+  const btn      = document.getElementById('delPasswordSubmitBtn')
+  const errorEl  = document.getElementById('delPasswordError')
+  const input    = document.getElementById('delPasswordInput')
+
+  if (!password) {
+    input.classList.add('error')
+    errorEl.textContent = 'Please enter your password.'
+    setTimeout(() => input.classList.remove('error'), 500)
+    return
+  }
+
+  btn.disabled    = true
+  btn.textContent = 'Verifying…'
+
+  try {
+    const res  = await fetchFresh(`${API}/api/sessions/${_delGroupId}`, {
+      method:  'DELETE',
+      headers: AUTH(),
+      body:    JSON.stringify({ password, verifyOnly: true })
+    })
+    const data = await res.json()
+
+    if (res.status === 401 && data.wrongPassword) {
+      input.classList.add('error')
+      errorEl.textContent = '❌ Incorrect password. Please try again.'
+      setTimeout(() => input.classList.remove('error'), 500)
+      btn.disabled    = false
+      btn.textContent = 'Verify →'
+      return
+    }
+
+    if (!res.ok && !data.readyToDelete) {
+      errorEl.textContent = '❌ ' + data.error
+      btn.disabled    = false
+      btn.textContent = 'Verify →'
+      return
+    }
+
+    _delVerified = true
+    window._delPassword = password
+
+    document.getElementById('delPasswordModal').classList.remove('show')
+    document.getElementById('delSessionNameConfirm').textContent = _delGroupName
+    document.getElementById('delConfirmBtn').disabled    = false
+    document.getElementById('delConfirmBtn').textContent = '🗑 Delete'
+    document.getElementById('delConfirmModal').classList.add('show')
+
+  } catch (err) {
+    errorEl.textContent = '❌ Network error. Try again.'
+    btn.disabled    = false
+    btn.textContent = 'Verify →'
+  }
+}
+
+window.confirmDeleteSession = async function() {
+  const btn = document.getElementById('delConfirmBtn')
+  btn.disabled    = true
+  btn.textContent = '⏳ Deleting…'
+
+  try {
+    const res  = await fetchFresh(`${API}/api/sessions/${_delGroupId}`, {
+      method:  'DELETE',
+      headers: AUTH(),
+      body:    JSON.stringify({ password: window._delPassword })
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      await Notify.alert('❌ ' + data.error, 'error')
+      btn.disabled    = false
+      btn.textContent = '🗑 Delete'
+      return
+    }
+
+    closeDeleteModals()
+
+    const card = document.getElementById('gc-' + _delGroupId)
+    if (card) {
+      card.style.transition = 'opacity 0.4s, transform 0.4s'
+      card.style.opacity    = '0'
+      card.style.transform  = 'scale(0.95)'
+      setTimeout(() => {
+        card.remove()
+        _allGroupCards = _allGroupCards.filter(c => c.id !== _delGroupId)
+        if (GROUP_ID === _delGroupId) {
+          GROUP_ID = null
+          document.getElementById('dashContent').classList.remove('show')
+        }
+      }, 400)
+    }
+
+    document.title = 'Live Results — Admin Dashboard'
+    await Notify.alert(`Session deleted successfully.\n"${_delGroupName}" has been removed.`, 'success')
+
+  } catch (err) {
+    await Notify.alert('Network error: ' + err.message, 'error')
+    btn.disabled    = false
+    btn.textContent = '🗑 Delete'
+  }
+}
+
+window.closeDeleteModals = function() {
+  document.getElementById('delPasswordModal').classList.remove('show')
+  document.getElementById('delConfirmModal').classList.remove('show')
+  window._delPassword = null
+}
+
+/* ── EDIT SESSION FLOW ── */
+let _editGroupData = null
+
+window.openEditModal = function(group) {
+  _editGroupData = group
+
+  document.getElementById('editSessionName').textContent =
+    `${group.college.toUpperCase()} — Sec ${group.section} — Sem ${group.semester}`
+
+  document.getElementById('editVotingStart').value = toLocalDatetimeInput(new Date(group.voting_start + 'Z'))
+  document.getElementById('editVotingEnd').value   = toLocalDatetimeInput(new Date(group.voting_end + 'Z'))
+
+  const resultSection = document.getElementById('editResultSection')
+  if (group.is_published && group.result_start && group.result_end) {
+    resultSection.style.display = 'block'
+    document.getElementById('editResultStart').value = toLocalDatetimeInput(new Date(group.result_start + 'Z'))
+    document.getElementById('editResultEnd').value   = toLocalDatetimeInput(new Date(group.result_end + 'Z'))
+  } else {
+    resultSection.style.display = 'none'
+    document.getElementById('editResultStart').value = ''
+    document.getElementById('editResultEnd').value   = ''
+  }
+
+  document.getElementById('editErrorMsg').textContent = ''
+  document.getElementById('editSaveBtn').disabled     = false
+  document.getElementById('editSaveBtn').textContent  = '💾 Save'
+  document.getElementById('editSessionModal').classList.add('show')
+}
+
+window.closeEditModal = function() {
+  document.getElementById('editSessionModal').classList.remove('show')
+}
+
+window.saveEditSession = async function() {
+  const btn   = document.getElementById('editSaveBtn')
+  const errEl = document.getElementById('editErrorMsg')
+  errEl.textContent = ''
+
+  const votingStart = document.getElementById('editVotingStart').value
+  const votingEnd   = document.getElementById('editVotingEnd').value
+
+  if (!votingStart || !votingEnd) {
+    errEl.textContent = '❌ Voting start and end are required.'
+    return
+  }
+  if (new Date(votingStart) >= new Date(votingEnd)) {
+    errEl.textContent = '❌ Voting end must be after start.'
+    return
+  }
+
+  const resultSection = document.getElementById('editResultSection')
+  let resultStart = null, resultEnd = null
+
+  if (resultSection.style.display !== 'none') {
+    resultStart = document.getElementById('editResultStart').value
+    resultEnd   = document.getElementById('editResultEnd').value
+    if (resultStart && resultEnd && new Date(resultStart) >= new Date(resultEnd)) {
+      errEl.textContent = '❌ Result end must be after result start.'
+      return
+    }
+  }
+
+  btn.disabled    = true
+  btn.textContent = '⏳ Checking conflicts…'
+
+  try {
+    const conflictRes  = await fetch(`${API}/api/sessions/${GROUP_ID}/check-edit-conflicts`, {
+      method:  'POST',
+      headers: AUTH(),
+      body: JSON.stringify({
+        votingStart: new Date(votingStart).toISOString(),
+        votingEnd:   new Date(votingEnd).toISOString(),
+        resultStart: resultStart ? new Date(resultStart).toISOString() : null,
+        resultEnd:   resultEnd   ? new Date(resultEnd).toISOString()   : null
+      })
+    })
+    const conflictData = await conflictRes.json()
+
+    if (conflictData.conflict) {
+      errEl.textContent   = '⚠️ ' + conflictData.message
+      btn.disabled        = false
+      btn.textContent     = '💾 Save'
+      return
+    }
+  } catch (err) {
+    errEl.textContent = '❌ Could not check conflicts. Please try again.'
+    btn.disabled      = false
+    btn.textContent   = '💾 Save'
+    return
+  }
+
+  btn.textContent = '⏳ Saving…'
+
+  try {
+    const body = {
+      votingStart: new Date(votingStart).toISOString(),
+      votingEnd:   new Date(votingEnd).toISOString()
+    }
+    if (resultStart && resultEnd) {
+      body.resultStart = new Date(resultStart).toISOString()
+      body.resultEnd   = new Date(resultEnd).toISOString()
+    }
+
+    const res  = await fetch(`${API}/api/sessions/${GROUP_ID}`, {
+      method:  'PUT',
+      headers: AUTH(),
+      body:    JSON.stringify(body)
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      errEl.textContent = '❌ ' + data.error
+      btn.disabled    = false
+      btn.textContent = '💾 Save'
+      return
+    }
+
+    closeEditModal()
+
+    const freshRes  = await fetchFresh(`${API}/api/results/${GROUP_ID}/publish-settings`, { headers: AUTH() })
+    const freshData = await freshRes.json()
+    const g = freshData.group
+
+    if (g) {
+      const fmtDT = dt => dt.toLocaleDateString('en-IN', { day:'numeric', month:'short' })
+                  + ', ' + dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })
+      document.getElementById('infoTime').textContent =
+        fmtDT(new Date(g.voting_start + 'Z')) + '  →  ' + fmtDT(new Date(g.voting_end + 'Z'))
+
+      if (g.result_start) {
+        document.getElementById('resultStart').value = toLocalDatetimeInput(new Date(g.result_start + 'Z'))
+      }
+      if (g.result_end) {
+        document.getElementById('resultEnd').value = toLocalDatetimeInput(new Date(g.result_end + 'Z'))
+      }
+    }
+
+    await Notify.alert('✅ Session updated successfully!', 'success')
+
+  } catch (err) {
+    errEl.textContent = '❌ Network error: ' + err.message
+    btn.disabled    = false
+    btn.textContent = '💾 Save'
+  }
+}
+</script>
+
+<!-- EDIT SESSION MODAL -->
+<div class="del-modal-overlay" id="editSessionModal">
+  <div class="del-modal" style="max-width:min(100%,560px)">
+    <div class="del-modal-icon">✏️</div>
+    <div class="del-modal-title">Edit Session</div>
+    <div class="del-modal-sub">Update the voting window or result display window for this session.</div>
+    <div class="del-modal-session-name" id="editSessionName">—</div>
+
+    <div style="text-align:left;margin-bottom:14px;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:#64748b;margin-bottom:8px;">
+        🗳️ Voting Period
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;margin-bottom:4px;">Start</div>
+          <input class="del-password-input" type="datetime-local" id="editVotingStart" style="margin-bottom:0;font-family:'DM Mono',monospace;font-size:0.8rem;">
+        </div>
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;margin-bottom:4px;">End</div>
+          <input class="del-password-input" type="datetime-local" id="editVotingEnd" style="margin-bottom:0;font-family:'DM Mono',monospace;font-size:0.8rem;">
+        </div>
+      </div>
+    </div>
+
+    <div id="editResultSection" style="text-align:left;margin-bottom:14px;display:none;">
+      <div style="height:1px;background:rgba(100,130,180,0.15);margin-bottom:14px;"></div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:#64748b;margin-bottom:8px;">
+        🏆 Result Display Period
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;margin-bottom:4px;">Start</div>
+          <input class="del-password-input" type="datetime-local" id="editResultStart" style="margin-bottom:0;font-family:'DM Mono',monospace;font-size:0.8rem;">
+        </div>
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.68rem;color:#94a3b8;margin-bottom:4px;">End</div>
+          <input class="del-password-input" type="datetime-local" id="editResultEnd" style="margin-bottom:0;font-family:'DM Mono',monospace;font-size:0.8rem;">
+        </div>
+      </div>
+    </div>
+
+    <div class="del-error-msg" id="editErrorMsg"></div>
+    <div class="del-modal-actions">
+      <button class="btn-del-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-del-confirm" id="editSaveBtn"
+        style="background:linear-gradient(135deg,#6366f1,#818cf8);box-shadow:0 4px 14px rgba(99,102,241,0.28);"
+        onclick="saveEditSession()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="del-modal-overlay" id="delPasswordModal">
+  <div class="del-modal">
+    <div class="del-modal-icon">🔐</div>
+    <div class="del-modal-title">Confirm Your Identity</div>
+    <div class="del-modal-sub">Enter your admin password to proceed with deleting this session.</div>
+    <div class="del-modal-session-name" id="delSessionNamePw">—</div>
+    <input
+      class="del-password-input"
+      type="password"
+      id="delPasswordInput"
+      placeholder="Enter your password"
+      autocomplete="current-password"
+    >
+    <div class="del-error-msg" id="delPasswordError"></div>
+    <div class="del-modal-actions">
+      <button class="btn-del-cancel" onclick="closeDeleteModals()">Cancel</button>
+      <button class="btn-del-confirm" id="delPasswordSubmitBtn" onclick="submitDeletePassword()">Verify →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="del-modal-overlay" id="delConfirmModal">
+  <div class="del-modal">
+    <div class="del-modal-icon">⚠️</div>
+    <div class="del-modal-title">Delete Session?</div>
+    <div class="del-modal-sub">This will permanently delete the session and all its data including votes, voters, candidates and ranges. This cannot be undone.</div>
+    <div class="del-modal-session-name" id="delSessionNameConfirm">—</div>
+    <div class="del-modal-actions">
+      <button class="btn-del-cancel" onclick="closeDeleteModals()">Cancel</button>
+      <button class="btn-del-confirm" id="delConfirmBtn" onclick="confirmDeleteSession()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/notifications.js"></script>
+</body>
+</html>
